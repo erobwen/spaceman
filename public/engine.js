@@ -108,10 +108,12 @@ function newRectangle(x, y, width, height, originX, originY) {
     width: width,
     height: height,
     render: function(context, camera) {
-			context.rect(Math.round(left(this) - left(camera)), Math.round(topY(this) - topY(camera)), this.width, this.height);
-      context.fillStyle = "gray";
-			context.fill();
-    	context.stroke();
+      if (calculateCollision(this, camera) !== null) {    
+        context.rect(Math.round(left(this) - left(camera)), Math.round(topY(this) - topY(camera)), this.width, this.height);
+        context.fillStyle = "gray";
+        context.fill();
+        context.stroke();
+      }
     },
     solid: false
   }
@@ -186,27 +188,29 @@ function setImage(object, image) {
     let canvasLeft = left(this) -left(camera);
     let canvasTop = topY(this) - topY(camera);
 
-  	if (this.imageRotation !== 0) {
-	    context.transform(1, 0, 0, 1, canvasLeft + this.originX, canvasTop + this.originY);
-    	context.rotate(this.imageRotation);
-	    context.transform(1, 0, 0, 1, -(canvasLeft + this.originX), -(canvasTop + this.originY));
-    }
-    
-    if (!object.useTiles) {
-		  context.drawImage(this.image, Math.round(canvasLeft), Math.round(canvasTop), Math.round(this.width), Math.round(this.height));
-    } else {
-    	context.drawImage(
-      	this.image, 
-        (this.tileWidth + this.spacer) * this.imageTile.x, 
-        (this.tileHeight + this.spacer) * this.imageTile.y, 
-        this.tileWidth, 
-        this.tileHeight, 
-        canvasLeft, canvasTop, this.width, this.height
-      );
-    }
+    if (calculateCollision(object, camera) !== null) {    
+      if (this.imageRotation !== 0) {
+        context.transform(1, 0, 0, 1, canvasLeft + this.originX, canvasTop + this.originY);
+        context.rotate(this.imageRotation);
+        context.transform(1, 0, 0, 1, -(canvasLeft + this.originX), -(canvasTop + this.originY));
+      }
+      
+      if (!object.useTiles) {
+        context.drawImage(this.image, Math.round(canvasLeft), Math.round(canvasTop), Math.round(this.width), Math.round(this.height));
+      } else {
+        context.drawImage(
+          this.image, 
+          (this.tileWidth + this.spacer) * this.imageTile.x, 
+          (this.tileHeight + this.spacer) * this.imageTile.y, 
+          this.tileWidth, 
+          this.tileHeight, 
+          canvasLeft, canvasTop, this.width, this.height
+        );
+      }
 
-  	if (this.imageRotation !== 0) {  
-	    context.setTransform(1, 0, 0, 1, 0, 0);
+      if (this.imageRotation !== 0) {  
+        context.setTransform(1, 0, 0, 1, 0, 0);
+      }
     }
   }
 }
