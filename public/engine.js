@@ -161,6 +161,16 @@ function newCamera(x, y) {
 function newWall(x, y, width, height) {
 	let wall = newImmobileObject(x, y, width, height);
   wall.name = "wall";
+  wall.render = function(context, camera) {
+    if (calculateCollision(this, camera) !== null) {    
+      let pattern = context.createPattern(images.steelWall1, "repeat");
+      // pattern.setTransform(new DOMMatrix([0, 0, 0, 0, 0, 0])); // left(camera), topY(camera)
+      context.rect(Math.round(left(this) - left(camera)), Math.round(topY(this) - topY(camera)), this.width, this.height);   
+      context.fillStyle = pattern;
+      context.fill();
+      //context.stroke();
+    }
+  }
   setSolid(wall);
   return wall;
 }
@@ -175,7 +185,7 @@ function setSolid(object) {
 }
 
 function setImage(object, image) {
-	object.image = document.getElementById(image);
+	object.image = image;
   object.imageRotation = 0; //from 0 to 2 Math.PI. Note, this will not influence collision, so it is mostly cosmetic
   
   object.useTiles = false;

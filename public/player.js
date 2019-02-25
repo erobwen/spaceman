@@ -1,6 +1,7 @@
 function newPlayer(x, y, image) {
 	//let result = newMobileObject(x, y, 126, 206);
 	let result = newMobileObject(x, y, 60, 100);
+  setImage(result, image);
   result.name = "player";
 	
   result.inJump = 0;
@@ -125,7 +126,6 @@ function newPlayer(x, y, image) {
     }
   }
   
-  setImage(result, "spaceman");
     
   return result;
 }

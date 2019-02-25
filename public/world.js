@@ -10,7 +10,10 @@ function loadImage(url) {
   function loadImageElement(element, url) {
     imagesBeingLoaded++;
     element.onload = function () {
-      if(--imagesBeingLoaded === 0) afterLoadingAllImages();
+      if(--imagesBeingLoaded === 0) {
+        log("loaded all images...");
+        afterLoadingAllImages();
+      }
       element.width = element.naturalWidth;
       element.height = element.naturalHeight;
     }
@@ -33,16 +36,10 @@ let images = {
 /**
  *  load the world
  */
-function generateWorld(image) {
+function generateWorld(imageElement) {
   console.log(" === generateWorld === ")
   
-  // TODO: do async
-  // var img = new Image();
-  // img.onload = function() { alert("Height: " + this.height); }
-  // img.src = "./images/level2.png";
-  
-  // Get image map
-  let imageElement = document.getElementById(image);
+  // Dimensions
   let width = imageElement.naturalWidth; 
   let height = imageElement.naturalHeight;
 
@@ -152,26 +149,31 @@ function generateWorld(image) {
   log(result);
   return result;  
 }
-log("foobar");
-let world = generateWorld("level2");
 
 /**
  *  Build the world
  */
+let world; 
+let camera; 
+let player;
+afterLoadingAllImages = function() {
+  // world = generateWorld(images.level1);
+  world = generateWorld(images.level2);
+  
+  camera = newCamera(0, 0);
+  player = newPlayer(0, 178*32, images.spaceman);
+  world = world.concat([
+    //newRectangle(-100, 0, 200, 20),
+    //newWall(-100, 50, 200, 20),
+    //newWall(100, -120, 20, 200),
+    newWall(-32, 32, 128, 32),
+    camera,
+    player,
+  ]);
+  log("==== The World ====");
+  log(world)
+  renderWorld();
 
-var camera = newCamera(0, 0);
-var player = newPlayer(0, 178*32, "spaceman");
-world = world.concat([
-  //newRectangle(-100, 0, 200, 20),
-	//newWall(-100, 50, 200, 20),
-	//newWall(100, -120, 20, 200),
-	newWall(-32, 32, 128, 32),
-	camera,
-	player,
-]);
-log("==== The World ====");
-log(world)
-renderWorld();
-
-//log(world);
-gameloop();
+  //log(world);
+  gameloop();  
+}
