@@ -1,8 +1,45 @@
 /**
+ *  load all of the images
+ */
+ 
+let imagesBeingLoaded = 0;
+let afterLoadingAllImages = (() => {});
+function loadImage(url) {
+  let element = document.createElement('img');
+  
+  function loadImageElement(element, url) {
+    imagesBeingLoaded++;
+    element.onload = function () {
+      if(--imagesBeingLoaded === 0) afterLoadingAllImages();
+      element.width = element.naturalWidth;
+      element.height = element.naturalHeight;
+    }
+    element.src = url;
+  }
+  
+  loadImageElement(element, url);
+  
+  return element;
+}
+
+let images = {
+  spaceman : loadImage("./images/spaceman60x100.png"),
+  level1 : loadImage("./images/level1.png"),
+  level2 : loadImage("./images/level2.png"),
+  steelWall1 : loadImage("./images/steel_wall_1_32x32.png")
+};
+
+ 
+/**
  *  load the world
  */
 function generateWorld(image) {
   console.log(" === generateWorld === ")
+  
+  // TODO: do async
+  // var img = new Image();
+  // img.onload = function() { alert("Height: " + this.height); }
+  // img.src = "./images/level2.png";
   
   // Get image map
   let imageElement = document.getElementById(image);
@@ -23,7 +60,8 @@ function generateWorld(image) {
   
   let colorCodes = {
     "rgba(255, 255, 255, 255)" : "space",
-    "rgba(0, 0, 0, 255)" : "wall"
+    "rgba(0, 0, 0, 255)" : "wall",
+    "rgba(0, 0, 0, 0)" : "wall"
   }
 
   let visitedMap = {};  
@@ -32,6 +70,7 @@ function generateWorld(image) {
   }
   
   let result = [];
+  let resultData = [];
   let tileSize = 32;
   
   function getColorCode(x, y) {
@@ -91,8 +130,12 @@ function generateWorld(image) {
           }
           finished = !expand;
         }
-        
-        result.push(newWall(topLeftX * tileSize, topLeftY * tileSize, (bottomRightX - topLeftX + 1) * tileSize, (bottomRightY - topLeftY + 1) * tileSize));
+        let wallX = topLeftX * tileSize;
+        let wallY = topLeftY * tileSize;
+        let wallWidth = (bottomRightX - topLeftX + 1) * tileSize;
+        let wallHeight = (bottomRightY - topLeftY + 1) * tileSize;
+        result.push(newWall(wallX, wallY, wallWidth, wallHeight));
+        resultData.push({x: wallX, y: wallY, w: wallWidth, h: wallHeight});
       }
     }
   }
@@ -105,7 +148,7 @@ function generateWorld(image) {
       startCollecting(x, y);
     }
   }
-
+  log(JSON.stringify(resultData));
   log(result);
   return result;  
 }
