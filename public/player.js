@@ -35,25 +35,28 @@ function newPlayer(x, y, image) {
     }
    
    function horizontalAccelleration() {
-      let airFactor = this.hasGroundContact ? 1 : 0.7;
-      let accelleration = airFactor * 30/framesPerSecond;
+      let airFactor = this.hasGroundContact ? 1 : 0.5;
+      let accelleration = airFactor * 60/framesPerSecond;
       let friction = airFactor * 0.6/framesPerSecond;  
-      let breakAction = airFactor * 10/framesPerSecond;
+      let breakAction = airFactor * 20/framesPerSecond;
 
       let xAcelleration = accelleration * (keyDown("ArrowRight") - keyDown("ArrowLeft"));
       let xFriction = oppositeSign(this.xSpeed) * (this.xSpeed * this.xSpeed * friction);
       this.xSpeed = this.xSpeed + xAcelleration + xFriction;
-      let xBreak = xAcelleration === 0 ? Math.min(breakAction, Math.abs(this.xSpeed)) : 0;
-      this.xSpeed = this.xSpeed + xBreak * oppositeSign(this.xSpeed);     
+      if (this.hasGroundContact) {
+        let xBreak = xAcelleration === 0 ? Math.min(breakAction, Math.abs(this.xSpeed)) : 0;
+        this.xSpeed = this.xSpeed + xBreak * oppositeSign(this.xSpeed);            
+      }
     }
     horizontalAccelleration.bind(this)();
 
     function verticalAccelleration() {
+      log(this.hasRightGrip);
     	let jumpAccelleration = 500/framesPerSecond;
       let gravity = 20/framesPerSecond;  
       let slippageFriction = 3/framesPerSecond;
-      let climbAccelleration = 50/framesPerSecond;
-      let climbFriction = 10/framesPerSecond;
+      let climbAccelleration = 60/framesPerSecond;
+      let climbFriction = 5/framesPerSecond;
       
       if (this.hasGroundContact) {
         if (keyDown("Space")) {
@@ -63,16 +66,21 @@ function newPlayer(x, y, image) {
       } else if (this.hasRightGrip || this.hasLeftGrip) {
       	let jumpDirection = this.hasLeftGrip ? 1 : -1;
         if (keyDown("Space")) {
-          this.ySpeed -= jumpAccelleration * 0.1;
-          this.xSpeed += jumpAccelleration * 0.4 * jumpDirection;  
+          this.ySpeed -= jumpAccelleration * 0.9;
+          this.xSpeed += jumpAccelleration * 0.9 * jumpDirection;  
         } else {
-        	this.xSpeed -= jumpDirection; // stick to surface
+        	this.xSpeed -= jumpDirection*1; // stick to surface
 					if (this.ySpeed > 0) {
-          	if (keyDown("ArrowDown")) slippageFriction *= 0.3; 
-          	this.ySpeed -= (this.ySpeed * this.ySpeed * slippageFriction);
+          	if (keyDown("ArrowDown")) slippageFriction *= 0.1; 
+          	this.ySpeed -= Math.min(this.ySpeed, (this.ySpeed * this.ySpeed * slippageFriction));
           }
+          log('keyDown("ArrowUp") = ' + keyDown("ArrowUp"));
           if(keyDown("ArrowUp")) {
+            log(-climbAccelleration);
+            log(this.ySpeed * this.ySpeed * climbFriction);
+            log(-climbAccelleration + (this.ySpeed * this.ySpeed * climbFriction));
 						this.ySpeed += -climbAccelleration + (this.ySpeed * this.ySpeed * climbFriction);
+            log("this.ySpeed:" + this.ySpeed);
           }
         }
       }

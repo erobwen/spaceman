@@ -45,10 +45,12 @@ let keyStates = {};
 document.addEventListener("keydown", function(event) {
 	log(event.key);
   keyStates[event.code] = 1;
+  log(keyStates);
 }, true);
 
 document.addEventListener("keyup", function(event) {
   keyStates[event.code] = 0;
+  log(keyStates);
 }, true);
 
 function keyDown(code) {
@@ -164,11 +166,14 @@ function newWall(x, y, width, height) {
   wall.render = function(context, camera) {
     if (calculateCollision(this, camera) !== null) {    
       let pattern = context.createPattern(images.steelWall1, "repeat");
-      // pattern.setTransform(new DOMMatrix([0, 0, 0, 0, 0, 0])); // left(camera), topY(camera)
+      pattern.setTransform(new DOMMatrix([1, 0, 0, 1, -left(camera), -topY(camera)])); // Only works in Google Chrome and some others.   // Read: https://stackoverflow.com/questions/20253210/canvas-pattern-offset
+      // context.setTransform(1, 0, 0, 1, -left(camera), -topY(camera)); // Did not work
+      // context.rect(left(this), topY(this), this.width, this.height);   
+      // context.setTransform(1, 0, 0, 1, 0, 0);
       context.rect(Math.round(left(this) - left(camera)), Math.round(topY(this) - topY(camera)), this.width, this.height);   
       context.fillStyle = pattern;
       context.fill();
-      //context.stroke();
+      context.stroke();
     }
   }
   setSolid(wall);
