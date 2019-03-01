@@ -98,9 +98,10 @@ function calculateCollision(A, B) {
     return null;
 }
 
-function newRectangle(x, y, width, height, originX, originY) {
+function newRectangle(x, y, width, height, originX, originY, color) {
 	if (typeof(originX) === 'undefined') originX = 0;
 	if (typeof(originY) === 'undefined') originY = 0;
+	if (typeof(color) === 'undefined') color = "pink";
   return {
   	name: "rectangle",
     x: x,
@@ -109,12 +110,14 @@ function newRectangle(x, y, width, height, originX, originY) {
     originY: originY,
     width: width,
     height: height,
+    color: color,
     render: function(context, camera) {
-      if (calculateCollision(this, camera) !== null) {    
+      if (calculateCollision(this, camera) !== null) {
+        // log("render rectangle" + this.color);        
         context.rect(Math.round(left(this) - left(camera)), Math.round(topY(this) - topY(camera)), this.width, this.height);
-        context.fillStyle = "gray";
+        context.fillStyle = this.color;
         context.fill();
-        context.stroke();
+        // context.stroke();
       }
     },
     solid: false
@@ -160,12 +163,16 @@ function newCamera(x, y) {
   return result;
 }
 
-function newWall(x, y, width, height) {
+function newWall(x, y, width, height, image) {
 	let wall = newImmobileObject(x, y, width, height);
   wall.name = "wall";
+  wall.image = image; 
   wall.render = function(context, camera) {
     if (calculateCollision(this, camera) !== null) {    
-      let pattern = context.createPattern(images.steelWall1, "repeat");
+      log("render wall");
+      log(image);
+      log(images[image]);
+      let pattern = context.createPattern(images[image], "repeat");
       pattern.setTransform(new DOMMatrix([1, 0, 0, 1, -left(camera), -topY(camera)])); // Only works in Google Chrome and some others.   // Read: https://stackoverflow.com/questions/20253210/canvas-pattern-offset
       // context.setTransform(1, 0, 0, 1, -left(camera), -topY(camera)); // Did not work
       // context.rect(left(this), topY(this), this.width, this.height);   
@@ -173,6 +180,8 @@ function newWall(x, y, width, height) {
       context.rect(Math.round(left(this) - left(camera)), Math.round(topY(this) - topY(camera)), this.width, this.height);   
       context.fillStyle = pattern;
       context.fill();
+      context.strokeStyle = "gray";
+      context.lineWidth = 1;
       context.stroke();
     }
   }
@@ -276,9 +285,15 @@ function renderWorld() {
 	context.clearRect(0, 0, canvas.width, canvas.height);
   context.beginPath();
   context.moveTo(0,0);
-  
+  // log("=========================================");
+  // log("rendering...");
 	for(let object of world) {
+    context = canvas.getContext("2d");
+    context.beginPath();
+    context.moveTo(0,0);
+    // context.save();
  		object.render(context, camera);
+    // context.restore();
  	}
 }
 

@@ -27,10 +27,14 @@ function loadImage(url) {
 
 let images = {
   spaceman : loadImage("./images/spaceman60x100.png"),
+  
   level1 : loadImage("./images/level1.png"),
   level2 : loadImage("./images/level2.png"),
-  steelWall1 : loadImage("./images/steel.png")
-  // steelWall1 : loadImage("./images/steel_wall_1_32x32.png")
+  level3 : loadImage("./images/level3.png"),
+  
+  labWall : loadImage("./images/lab_wall.png"),
+  steelWall : loadImage("./images/steel.png"),
+  oldSteelWall : loadImage("./images/steel_wall_1_32x32.png")
 };
 
  
@@ -58,8 +62,11 @@ function generateWorld(imageElement) {
   
   let colorCodes = {
     "rgba(255, 255, 255, 255)" : "space",
-    "rgba(0, 0, 0, 255)" : "wall",
-    "rgba(0, 0, 0, 0)" : "wall"
+    "rgba(0, 0, 0, 255)" : "oldSteelWall",
+    "rgba(127, 127, 127, 255)" : "steelWall",
+    "rgba(239, 228, 175, 255)" : "labWall",
+    
+    // "rgba(0, 0, 0, 0)" : "wall"
   }
 
   let visitedMap = {};  
@@ -76,8 +83,13 @@ function generateWorld(imageElement) {
     let g = imageData.data[y * width * 4 + x * 4 + 1];
     let b = imageData.data[y * width * 4 + x * 4 + 2];
     let a = imageData.data[y * width * 4 + x * 4 + 3];
-    if (typeof(colorCodes["rgba("+r+", "+g+", "+b+", "+a+")"]) === 'undefined') log("Warning: unrecognized color code rgba("+r+", "+g+", "+b+", "+a+")");
-    return colorCodes["rgba("+r+", "+g+", "+b+", "+a+")"];
+    let colorString = "rgba("+r+", "+g+", "+b+", "+a+")";
+    if (typeof(colorCodes[colorString]) === 'undefined') {      
+      log("Warning: unrecognized color code rgba("+r+", "+g+", "+b+", "+a+")");
+      return colorString;
+    } else {
+      return colorCodes[colorString];
+    }
   } 
   
   function key(x, y) {
@@ -88,7 +100,8 @@ function generateWorld(imageElement) {
     if (!visited(x, y)) {
       visitedMap[key(x, y)] = true;
       let code = getColorCode(x, y);
-      if (code === "wall") {
+
+      if (code !== "space") {
         let topLeftX = x;
         let topLeftY = y;
         let bottomRightX = x;
@@ -96,44 +109,53 @@ function generateWorld(imageElement) {
         
         let finished = false;
         while(!finished) {
+          let expand = false;
+          
           // Try expand right
           let scanX = bottomRightX + 1;
-          let allTheSame = true;
-          let expand = false;
-          for (let scanY = topLeftY; scanY <= bottomRightY; scanY++) {
-            if (code !== getColorCode(scanX, scanY) || visited(scanX, scanY)) allTheSame = false;
-          }
-          if (allTheSame) {
-            // log("expand right");
-            expand = true;
-            bottomRightX++;
+          if (scanX < width) {
+            let allTheSame = true;
             for (let scanY = topLeftY; scanY <= bottomRightY; scanY++) {
-              visitedMap[key(scanX, scanY)] = true;
+              if (code !== getColorCode(scanX, scanY) || visited(scanX, scanY)) allTheSame = false;
             }
+            if (allTheSame) {
+              // log("expand right");
+              expand = true;
+              bottomRightX++;
+              for (let scanY = topLeftY; scanY <= bottomRightY; scanY++) {
+                visitedMap[key(scanX, scanY)] = true;
+              }
+            }            
           }
 
           // Try expand right
           scanY = bottomRightY + 1;
-          allTheSame = true;
-          for (let scanX = topLeftX; scanX <= bottomRightX; scanX++) {
-            if (code !== getColorCode(scanX, scanY) || visited(scanX, scanY)) allTheSame = false;
-          }
-          if (allTheSame) {
-            // log("expand left");
-            expand = true;
-            bottomRightY++;
+          if (scanY < height) {           
+            allTheSame = true;
             for (let scanX = topLeftX; scanX <= bottomRightX; scanX++) {
-              visitedMap[key(scanX, scanY)] = true;
+              if (code !== getColorCode(scanX, scanY) || visited(scanX, scanY)) allTheSame = false;
+            }
+            if (allTheSame) {
+              // log("expand left");
+              expand = true;
+              bottomRightY++;
+              for (let scanX = topLeftX; scanX <= bottomRightX; scanX++) {
+                visitedMap[key(scanX, scanY)] = true;
+              }
             }
           }
           finished = !expand;
         }
-        let wallX = topLeftX * tileSize;
-        let wallY = topLeftY * tileSize;
-        let wallWidth = (bottomRightX - topLeftX + 1) * tileSize;
-        let wallHeight = (bottomRightY - topLeftY + 1) * tileSize;
-        result.push(newWall(wallX, wallY, wallWidth, wallHeight));
-        resultData.push({x: wallX, y: wallY, w: wallWidth, h: wallHeight});
+        let shapeX = topLeftX * tileSize;
+        let shapeY = topLeftY * tileSize;
+        let shapeWidth = (bottomRightX - topLeftX + 1) * tileSize;
+        let shapeHeight = (bottomRightY - topLeftY + 1) * tileSize;
+        if (code.endsWith("all")) { // TODO: case insensitive.
+          result.push(newWall(shapeX, shapeY, shapeWidth, shapeHeight, code));
+          // resultData.push({x: shapeX, y: shapeY, w: shapeWidth, h: shapeHeight});          
+        } else {
+          result.push(newRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, code));
+        }
       }
     }
   }
@@ -162,12 +184,12 @@ afterLoadingAllImages = function() {
   world = generateWorld(images.level2);
   
   camera = newCamera(0, 0);
-  player = newPlayer(0, 178*32, images.spaceman);
+  player = newPlayer(0, 0, images.spaceman); //level2: 178*32
   world = world.concat([
     //newRectangle(-100, 0, 200, 20),
     //newWall(-100, 50, 200, 20),
     //newWall(100, -120, 20, 200),
-    newWall(-32, 32, 128, 32),
+    newWall(-32, 32, 128, 32, "oldSteelWall"),
     camera,
     player,
   ]);

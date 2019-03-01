@@ -51,7 +51,7 @@ function newPlayer(x, y, image) {
     horizontalAccelleration.bind(this)();
 
     function verticalAccelleration() {
-      log(this.hasRightGrip);
+      //log(this.hasRightGrip);
     	let jumpAccelleration = 800/framesPerSecond;
       let gravity = 25/framesPerSecond;  
       let slippageFriction = 3/framesPerSecond;
