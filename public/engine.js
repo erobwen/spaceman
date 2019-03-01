@@ -288,7 +288,7 @@ function renderWorld() {
  */
  
 var quit = false;
-var framesPerSecond = 40;
+var framesPerSecond = 60;
 var alreadyInGameLoop = false;
 var frameDuration = 1000 / framesPerSecond;
 function gameloop() {

@@ -29,7 +29,8 @@ let images = {
   spaceman : loadImage("./images/spaceman60x100.png"),
   level1 : loadImage("./images/level1.png"),
   level2 : loadImage("./images/level2.png"),
-  steelWall1 : loadImage("./images/steel_wall_1_32x32.png")
+  steelWall1 : loadImage("./images/steel.png")
+  // steelWall1 : loadImage("./images/steel_wall_1_32x32.png")
 };
 
  

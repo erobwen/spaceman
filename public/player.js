@@ -36,7 +36,7 @@ function newPlayer(x, y, image) {
    
    function horizontalAccelleration() {
       let airFactor = this.hasGroundContact ? 1 : 0.5;
-      let accelleration = airFactor * 60/framesPerSecond;
+      let accelleration = airFactor * 100/framesPerSecond;
       let friction = airFactor * 0.6/framesPerSecond;  
       let breakAction = airFactor * 20/framesPerSecond;
 
@@ -52,8 +52,8 @@ function newPlayer(x, y, image) {
 
     function verticalAccelleration() {
       log(this.hasRightGrip);
-    	let jumpAccelleration = 500/framesPerSecond;
-      let gravity = 20/framesPerSecond;  
+    	let jumpAccelleration = 800/framesPerSecond;
+      let gravity = 25/framesPerSecond;  
       let slippageFriction = 3/framesPerSecond;
       let climbAccelleration = 60/framesPerSecond;
       let climbFriction = 5/framesPerSecond;
