@@ -169,9 +169,9 @@ function newWall(x, y, width, height, image) {
   wall.image = image; 
   wall.render = function(context, camera) {
     if (calculateCollision(this, camera) !== null) {    
-      log("render wall");
-      log(image);
-      log(images[image]);
+      // log("render wall");
+      // log(image);
+      // log(images[image]);
       let pattern = context.createPattern(images[image], "repeat");
       pattern.setTransform(new DOMMatrix([1, 0, 0, 1, -left(camera), -topY(camera)])); // Only works in Google Chrome and some others.   // Read: https://stackoverflow.com/questions/20253210/canvas-pattern-offset
       // context.setTransform(1, 0, 0, 1, -left(camera), -topY(camera)); // Did not work
@@ -306,7 +306,19 @@ var quit = false;
 var framesPerSecond = 60;
 var alreadyInGameLoop = false;
 var frameDuration = 1000 / framesPerSecond;
+function getTimestamp() {
+  let d = new Date();
+  return d.getTime();
+}
+
+var loopTimestamp = null;
 function gameloop() {
+  if (loopTimestamp !== null) {
+    let newTimestamp = getTimestamp();
+    let diff = newTimestamp - loopTimestamp;
+    loopTimestamp = newTimestamp;
+    log(diff);
+  }
   if (keyDown("Escape")) return;
   
   setTimeout(gameloop, frameDuration);

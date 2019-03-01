@@ -36,7 +36,7 @@ function newPlayer(x, y, image) {
    
    function horizontalAccelleration() {
       let airFactor = this.hasGroundContact ? 1 : 0.5;
-      let accelleration = airFactor * 100/framesPerSecond;
+      let accelleration = airFactor * 150/framesPerSecond;
       let friction = airFactor * 0.6/framesPerSecond;  
       let breakAction = airFactor * 20/framesPerSecond;
 

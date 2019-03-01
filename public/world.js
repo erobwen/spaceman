@@ -34,6 +34,7 @@ let images = {
   
   labWall : loadImage("./images/lab_wall.png"),
   steelWall : loadImage("./images/steel.png"),
+  darkSteelWall : loadImage("./images/steel_dark.png"),
   oldSteelWall : loadImage("./images/steel_wall_1_32x32.png")
 };
 
@@ -64,11 +65,15 @@ function generateWorld(imageElement) {
     "rgba(255, 255, 255, 255)" : "space",
     "rgba(0, 0, 0, 255)" : "oldSteelWall",
     "rgba(127, 127, 127, 255)" : "steelWall",
+    "rgba(107, 107, 107, 255)" : "darkSteelWall",
     "rgba(239, 228, 175, 255)" : "labWall",
+    "rgba(255, 174, 201, 255)" : "legendSeparator",
     
     // "rgba(0, 0, 0, 0)" : "wall"
   }
-
+  
+  let hasReachedLegend = false;
+  
   let visitedMap = {};  
   function visited(x, y) {
     return typeof(visitedMap[key(x, y)]) !== 'undefined';
@@ -85,7 +90,7 @@ function generateWorld(imageElement) {
     let a = imageData.data[y * width * 4 + x * 4 + 3];
     let colorString = "rgba("+r+", "+g+", "+b+", "+a+")";
     if (typeof(colorCodes[colorString]) === 'undefined') {      
-      log("Warning: unrecognized color code rgba("+r+", "+g+", "+b+", "+a+")");
+      // log("Warning: unrecognized color code rgba("+r+", "+g+", "+b+", "+a+")");
       return colorString;
     } else {
       return colorCodes[colorString];
@@ -97,11 +102,12 @@ function generateWorld(imageElement) {
   }
   
   function startCollecting(x, y) {
-    if (!visited(x, y)) {
+    if (!visited(x, y) && !hasReachedLegend) {
       visitedMap[key(x, y)] = true;
       let code = getColorCode(x, y);
-
-      if (code !== "space") {
+      if (code === "legendSeparator") {
+        hasReachedLegend = true; 
+      } else if (code !== "space") {
         let topLeftX = x;
         let topLeftY = y;
         let bottomRightX = x;
