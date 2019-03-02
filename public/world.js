@@ -1,3 +1,12 @@
+
+/**
+ *  Globals
+ */
+
+var world; 
+var camera; 
+var player;
+
 /**
  *  load all of the images
  */
@@ -62,6 +71,7 @@ function generateWorld(imageElement) {
   
   
   let colorCodes = {
+    "rgba(255, 82, 105, 255)" : "player",
     "rgba(255, 255, 255, 255)" : "space",
     "rgba(0, 0, 0, 255)" : "oldSteelWall",
     "rgba(127, 127, 127, 255)" : "steelWall",
@@ -71,6 +81,7 @@ function generateWorld(imageElement) {
     
     // "rgba(0, 0, 0, 0)" : "wall"
   }
+  let defaultColorCode = null;
   
   let hasReachedLegend = false;
   
@@ -105,6 +116,7 @@ function generateWorld(imageElement) {
     if (!visited(x, y) && !hasReachedLegend) {
       visitedMap[key(x, y)] = true;
       let code = getColorCode(x, y);
+      if (defaultColorCode === null) defaultColorCode = code; // Just pick the first one. 
       if (code === "legendSeparator") {
         hasReachedLegend = true; 
       } else if (code !== "space") {
@@ -156,7 +168,12 @@ function generateWorld(imageElement) {
         let shapeY = topLeftY * tileSize;
         let shapeWidth = (bottomRightX - topLeftX + 1) * tileSize;
         let shapeHeight = (bottomRightY - topLeftY + 1) * tileSize;
-        if (code.endsWith("all")) { // TODO: case insensitive.
+        if (code === "player") {
+          log("Found player!!");
+          camera = newCamera(shapeX + shapeWidth/2, shapeY + shapeHeight/2);
+          player = newPlayer(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.spaceman); //level2: 178*32
+          result.push(newRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode));
+        } else if (code.endsWith("all")) { // TODO: case insensitive.
           result.push(newWall(shapeX, shapeY, shapeWidth, shapeHeight, code));
           // resultData.push({x: shapeX, y: shapeY, w: shapeWidth, h: shapeHeight});          
         } else {
@@ -182,20 +199,17 @@ function generateWorld(imageElement) {
 /**
  *  Build the world
  */
-let world; 
-let camera; 
-let player;
 afterLoadingAllImages = function() {
   // world = generateWorld(images.level1);
   world = generateWorld(images.level2);
-  
-  camera = newCamera(0, 0);
-  player = newPlayer(0, 0, images.spaceman); //level2: 178*32
+  log(player);
+  log(camera);
+  if(typeof(player) === "undefined") {
+    camera = newCamera(0, 0);
+    player = newPlayer(0, 0, images.spaceman); //level2: 178*32    
+  }
   world = world.concat([
-    //newRectangle(-100, 0, 200, 20),
-    //newWall(-100, 50, 200, 20),
-    //newWall(100, -120, 20, 200),
-    newWall(-32, 32, 128, 32, "oldSteelWall"),
+    // newWall(-32, 32, 128, 32, "oldSteelWall"),
     camera,
     player,
   ]);
