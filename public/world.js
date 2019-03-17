@@ -6,6 +6,7 @@
 var world; 
 var camera; 
 var player;
+var mobs = [];
 
 /**
  *  load all of the images
@@ -35,6 +36,7 @@ function loadImage(url) {
 }
 
 let images = {
+  minibunny : loadImage("./images/minibunny16x16.png"),
   spaceman : loadImage("./images/spaceman60x100.png"),
   
   level1 : loadImage("./images/level1.png"),
@@ -71,12 +73,17 @@ function generateWorld(imageElement) {
   
   
   let colorCodes = {
+    "rgba(255, 242, 0, 255)" : "minibunny",
+    
     "rgba(255, 82, 105, 255)" : "player",
+    
     "rgba(255, 255, 255, 255)" : "space",
+    
     "rgba(0, 0, 0, 255)" : "oldSteelWall",
     "rgba(127, 127, 127, 255)" : "steelWall",
     "rgba(107, 107, 107, 255)" : "darkSteelWall",
     "rgba(239, 228, 175, 255)" : "labWall",
+    
     "rgba(255, 174, 201, 255)" : "legendSeparator",
     
     // "rgba(0, 0, 0, 0)" : "wall"
@@ -168,7 +175,11 @@ function generateWorld(imageElement) {
         let shapeY = topLeftY * tileSize;
         let shapeWidth = (bottomRightX - topLeftX + 1) * tileSize;
         let shapeHeight = (bottomRightY - topLeftY + 1) * tileSize;
-        if (code === "player") {
+        if (code === "minibunny") {
+          log("Found bunny!!");
+          mobs.push(newMiniBunny(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.minibunny)); //level2: 178*32
+          result.push(newRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode));          
+        } else if (code === "player") {
           log("Found player!!");
           camera = newCamera(shapeX + shapeWidth/2, shapeY + shapeHeight/2);
           player = newPlayer(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.spaceman); //level2: 178*32
@@ -208,6 +219,7 @@ afterLoadingAllImages = function() {
     camera = newCamera(0, 0);
     player = newPlayer(0, 0, images.spaceman); //level2: 178*32    
   }
+  world = world.concat(mobs);
   world = world.concat([
     // newWall(-32, 32, 128, 32, "oldSteelWall"),
     camera,
