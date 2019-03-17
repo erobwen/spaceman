@@ -148,7 +148,43 @@ function newMobileObject(x, y, width, height, originX, originY) {
   result.accellerate = function() {};
   result.animate = function(timeDuration) {};
   result.resetCollisionState = function() {};
-  result.collide = function() {};
+  
+  result.resetCollisionState = function() {
+    this.hasGroundContact = false;
+    this.hasLeftGrip = false;
+    this.hasRightGrip = false;
+    this.hasTopGrip = false;
+  }
+  result.resetCollisionState();
+  
+  result.collide = function(collision, object) {
+    if(collision.width > collision.height) {
+      if(centerY(collision) < centerY(this)) {
+        // Push this down
+        this.y += collision.height;
+        this.ySpeed = 0;
+        this.hasTopGrip = true;
+      } else {
+        // Push this up
+        this.y -= collision.height;
+        this.ySpeed = 0;
+        this.hasGroundContact = true;
+      }
+    } else {
+      if(centerX(collision) < centerX(this)) {
+        // Push this right
+        this.x += collision.width;
+        this.xSpeed = 0;
+        this.hasLeftGrip = true;
+      } else {
+        // Push this left
+        this.x -= collision.width;
+        this.xSpeed = 0;
+        this.hasRightGrip = true;
+      }      	
+    }
+  }
+  
   mobileObjects.push(result);
   return result;
 }
@@ -161,6 +197,8 @@ function newCamera(x, y) {
   	camera.xSpeed = (player.x - camera.x) / 2;
 		camera.ySpeed = (player.y - camera.y) / 2;
   }
+  result.collide = function() {};
+  
   result.solid = false;
 	result.render = function() {}; // Never render itself!
   return result;
