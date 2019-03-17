@@ -136,6 +136,8 @@ function newImmobileObject(x, y, width, height, originX, originY) {
   return result;
 }
 
+
+let mobileObjects = [];
 function newMobileObject(x, y, width, height, originX, originY) {
 	if (typeof(originX) === 'undefined') originX = width / 2; // Mobile objects have center origin.
 	if (typeof(originY) === 'undefined') originY = height / 2;
@@ -147,6 +149,7 @@ function newMobileObject(x, y, width, height, originX, originY) {
   result.animate = function(timeDuration) {};
   result.resetCollisionState = function() {};
   result.collide = function() {};
+  mobileObjects.push(result);
   return result;
 }
 
@@ -267,15 +270,17 @@ function moveObjects() {
 }
 
 function collideObjects() {
-  let subject = player; // TODO: loop all that are mobile.
-  subject.resetCollisionState();
-  for(let object of world) {
-  	if (object.solid && object !== subject) {
-      let collision = calculateCollision(subject, object);
-      if (collision !== null) {
-      	subject.collide(collision, object);
+  // let subject = player; // TODO: loop all that are mobile.
+  for(let subject of mobileObjects) {
+    subject.resetCollisionState();
+    for(let object of world) {
+      if (object.solid && object !== subject) {
+        let collision = calculateCollision(subject, object);
+        if (collision !== null) {
+          subject.collide(collision, object);
+        }
       }
-    }
+    }    
   }
 } 
 
