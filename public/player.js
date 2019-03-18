@@ -1,6 +1,6 @@
 function newPlayer(x, y, image) {
 	//let result = newMobileObject(x, y, 126, 206);
-	let result = newMobileObject(x, y, 60, 100);
+	let result = newMobileBody(x, y, 60, 100);
   setImage(result, image);
   result.name = "player";
 	
@@ -98,6 +98,8 @@ function newPlayer(x, y, image) {
       this.imageRotation = sign(this.xSpeed) * Math.PI * 2 * this.inSpinAnimation / 400
     }
   }
-    
+
+  world.player = result;
+  
   return result;
 }

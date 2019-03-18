@@ -37,6 +37,7 @@ function newMiniBunny(x, y, image) {
     // }
   }
   
+  world.mobs.push(result);
     
   return result;
 }

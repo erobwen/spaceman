@@ -3,10 +3,20 @@
  *  Globals
  */
 
-var world; 
-var camera; 
-var player;
-var mobs = [];
+var world = {
+  camera: null,
+  player: null,
+  
+  visibleObjects: [],
+  
+  immobileObjects: [],
+  mobileObjects: [],
+  
+  walls: [],
+  mobileBodies: [],
+  
+  mobs: [],
+};
 
 /**
  *  load all of the images
@@ -97,8 +107,6 @@ function generateWorld(imageElement) {
     return typeof(visitedMap[key(x, y)]) !== 'undefined';
   }
   
-  let result = [];
-  let resultData = [];
   let tileSize = 32;
   
   function getColorCode(x, y) {
@@ -177,18 +185,18 @@ function generateWorld(imageElement) {
         let shapeHeight = (bottomRightY - topLeftY + 1) * tileSize;
         if (code === "minibunny") {
           log("Found bunny!!");
-          mobs.push(newMiniBunny(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.minibunny)); //level2: 178*32
-          result.push(newRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode));          
+          newMiniBunny(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.minibunny); //level2: 178*32
+          newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode);          
         } else if (code === "player") {
           log("Found player!!");
           camera = newCamera(shapeX + shapeWidth/2, shapeY + shapeHeight/2);
           player = newPlayer(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.spaceman); //level2: 178*32
-          result.push(newRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode));
+          newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode);
         } else if (code.endsWith("all")) { // TODO: case insensitive.
-          result.push(newWall(shapeX, shapeY, shapeWidth, shapeHeight, code));
+          newWall(shapeX, shapeY, shapeWidth, shapeHeight, code);
           // resultData.push({x: shapeX, y: shapeY, w: shapeWidth, h: shapeHeight});          
         } else {
-          result.push(newRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, code));
+          newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, code);
         }
       }
     }
@@ -202,33 +210,25 @@ function generateWorld(imageElement) {
       startCollecting(x, y);
     }
   }
-  log(JSON.stringify(resultData));
-  log(result);
-  return result;  
+  
+  // Add player if not found earlier
+  if(world.player === null) {
+    world.camera = newCamera(0, 0);
+    world.player = newPlayer(0, 0, images.spaceman); //level2: 178*32    
+  }
 }
 
 /**
  *  Build the world
  */
 afterLoadingAllImages = function() {
-  // world = generateWorld(images.level1);
-  world = generateWorld(images.level2);
-  log(player);
-  log(camera);
-  if(typeof(player) === "undefined") {
-    camera = newCamera(0, 0);
-    player = newPlayer(0, 0, images.spaceman); //level2: 178*32    
-  }
-  world = world.concat(mobs);
-  world = world.concat([
-    // newWall(-32, 32, 128, 32, "oldSteelWall"),
-    camera,
-    player,
-  ]);
+  log("==== Generate World ====");
+  generateWorld(images.level2);
+  
   log("==== The World ====");
   log(world)
   renderWorld();
 
-  //log(world);
+  log("==== Game Loop ====");
   gameloop();  
 }
