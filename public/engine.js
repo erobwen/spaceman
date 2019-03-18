@@ -108,7 +108,8 @@ function newRectangle(x, y, width, height, originX, originY) {
     originX: originX,
     originY: originY,
     width: width,
-    height: height
+    height: height,
+    zIndex : 0
   }
 }
 
@@ -342,7 +343,17 @@ function renderWorld() {
   context.moveTo(0,0);
   // log("=========================================");
   // log("rendering...");
+
+  let scene = [];
 	for(let object of world.visibleObjects) {
+    if (calculateCollision(object, world.camera) !== null) {
+      scene.push(object);
+    }
+  }
+
+  scene.sort((a, b) => { return a.zIndex - b.zIndex; });
+  // log(scene);
+  for(let object of scene) {
     context = canvas.getContext("2d");
     context.beginPath();
     context.moveTo(0,0);

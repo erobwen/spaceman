@@ -1,8 +1,10 @@
 function newMiniBunny(x, y, image) {
 	//let result = newMobileObject(x, y, 126, 206);
-	let result = newMobileObject(x, y, 16, 16);
+	let result = newMobileBody(x, y, 16, 16);
   setImage(result, image);
   result.name = "minibunny";
+  result.zIndex = 1;
+	
   
   // result.inJump = 0;
   // result.inSpinAnimation = 0;

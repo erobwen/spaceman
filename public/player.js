@@ -3,6 +3,7 @@ function newPlayer(x, y, image) {
 	let result = newMobileBody(x, y, 60, 100);
   setImage(result, image);
   result.name = "player";
+  result.zIndex = 1;
 	
   result.inJump = 0;
   result.inSpinAnimation = 0;
