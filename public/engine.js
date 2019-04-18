@@ -57,6 +57,13 @@ function keyDown(code) {
 	return typeof(keyStates[code]) === 'undefined' ? 0 : keyStates[code]; 
 }
 
+function anyKeyDown(codes) {
+  for (let code of codes) {
+    if (keyDown(code)) return true;
+  }
+  return false;
+}
+
 
 /**
  *  Geometric rectangle base class

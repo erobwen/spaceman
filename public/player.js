@@ -1,3 +1,22 @@
+let keyMap = {
+  "moveLeft" : ["ArrowLeft", "KeyA"],
+  "moveRight" : ["ArrowRight", "KeyD"],
+  "jump" : "Space",
+  "moveUp" : ["ArrowUp", "KeyW"],
+  "moveDown" : ["ArrowDown", "KeyS"]
+}
+
+
+function actionKeyDown(actionKey) {
+  let keys = keyMap[actionKey];
+  if (keys instanceof Array) {
+    return anyKeyDown(keys);
+  } else {
+    return keyDown(keys);
+  }
+}
+
+
 function newPlayer(x, y, image) {
 	//let result = newMobileObject(x, y, 126, 206);
 	let result = newMobileBody(x, y, 60, 100);
@@ -41,7 +60,7 @@ function newPlayer(x, y, image) {
       let friction = airFactor * 0.6/framesPerSecond;  
       let breakAction = airFactor * 20/framesPerSecond;
 
-      let xAcelleration = accelleration * (keyDown("ArrowRight") - keyDown("ArrowLeft"));
+      let xAcelleration = accelleration * (actionKeyDown("moveRight") - actionKeyDown("moveLeft"));
       let xFriction = oppositeSign(this.xSpeed) * (this.xSpeed * this.xSpeed * friction);
       this.xSpeed = this.xSpeed + xAcelleration + xFriction;
       if (this.hasGroundContact) {
@@ -60,23 +79,23 @@ function newPlayer(x, y, image) {
       let climbFriction = 5/framesPerSecond;
       
       if (this.hasGroundContact) {
-        if (keyDown("Space")) {
+        if (actionKeyDown("jump")) {
         	this.inJump = true;
           this.ySpeed -= jumpAccelleration;
         } 
       } else if (this.hasRightGrip || this.hasLeftGrip) {
       	let jumpDirection = this.hasLeftGrip ? 1 : -1;
-        if (keyDown("Space")) {
+        if (actionKeyDown("jump")) { 
           this.ySpeed -= jumpAccelleration * 0.9;
           this.xSpeed += jumpAccelleration * 0.9 * jumpDirection;  
         } else {
         	this.xSpeed -= jumpDirection*1; // stick to surface
 					if (this.ySpeed > 0) {
-          	if (keyDown("ArrowDown")) slippageFriction *= 0.1; 
+          	if (actionKeyDown("moveDown")) slippageFriction *= 0.1; 
           	this.ySpeed -= Math.min(this.ySpeed, (this.ySpeed * this.ySpeed * slippageFriction));
           }
-          log('keyDown("ArrowUp") = ' + keyDown("ArrowUp"));
-          if(keyDown("ArrowUp")) {
+          log('actionKeyDown("moveUp") = ' + actionKeyDown("moveUp"));
+          if(actionKeyDown("moveUp")) {
             log(-climbAccelleration);
             log(this.ySpeed * this.ySpeed * climbFriction);
             log(-climbAccelleration + (this.ySpeed * this.ySpeed * climbFriction));
