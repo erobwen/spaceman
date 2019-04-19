@@ -28,8 +28,7 @@ function sign(number) {
 /**
  *  Setup canvas
  */
- 
- log(document);
+log(document);
 let canvas = document.getElementById("canvas");
 log(canvas);
 canvas.width = canvas.getClientRects()[0].width;
@@ -105,10 +104,13 @@ function calculateCollision(A, B) {
     return null;
 }
 
+
+let nextId = 0;
 function newRectangle(x, y, width, height, originX, originY) {
 	if (typeof(originX) === 'undefined') originX = 0;
 	if (typeof(originY) === 'undefined') originY = 0;
   return {
+    id : nextId++,
   	name: "rectangle",
     x: x,
     y: y,
@@ -229,6 +231,7 @@ function newCamera(x, y) {
 
 function newWall(x, y, width, height, image) {
 	let wall = newImmobileObject(x, y, width, height);
+  wall.invertedWeight = 0;
   wall.name = "wall";
   wall.image = image; 
   wall.render = function(context, camera) {

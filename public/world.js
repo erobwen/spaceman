@@ -2,21 +2,115 @@
 /**
  *  Globals
  */
+var world;
 
-var world = {
-  camera: null,
-  player: null,
-  
-  visibleObjects: [],
-  
-  immobileObjects: [],
-  mobileObjects: [],
-  
-  walls: [],
-  mobileBodies: [],
-  
-  mobs: [],
-};
+
+/**
+ *  Quad tree
+ */
+function createQuadNode(x, y, width, height) {
+  let node = newRectangle(x, y, width, height) 
+  Object.assign(node, {
+    pivotX: centerX(node),
+    pivotY: centerY(node),
+    
+    objects: [],
+    
+    topLeft: null,
+    topRight: null, 
+    bottomLeft: null, 
+    bottomRight: null,
+    
+    addCollisions: function(object, collisions) {
+      function collisionId(objectA, objectB) {
+        let idA = objectA.id;
+        let idB = objectB.id;
+        return idA < idB ? (idA + ":" + idB) : (idB + ":" + idA);        
+      }
+      
+      for (let storedObject of this.objects) {
+        let collision = calculateCollision(storedObject, object);
+        if (collision) {
+          let id = collisionId(storedObject, object);
+          if (typeof(collisions[id]) === 'undefined') {
+            objectHasMoreMass = object.invertedMass <= storedObject.invertedMass;
+            collisions[id] = {
+                a: objectHasMoreMass ? object : storedObject, 
+                b: objectHasMoreMass ? storedObject : object
+            };
+          }
+        }
+      }
+      
+      let inTopLeft = left(object) <= this.pivotX && topY(object) <= this.pivotY;
+      let inTopRight = this.pivotX < right(object) && topY(object) <= this.pivotY;
+      let inBottomLeft = left(object) <= this.pivotX && this.pivotY < bottom(object);
+      let inBottomRight = this.pivotX < right(object) && this.pivotY < bottom(object);
+      
+      if (inTopLeft) this.topLeft.addCollisions(object, collisions);
+      if (inTopRight) this.topRight.addCollisions(object, collisions);
+      if (inBottomLeft) this.bottomLeft.addCollisions(object, collisions);
+      if (inBottomRight) this.bottomRight.addCollisions(object, collisions);
+    },
+    
+    addObject: function(object) {
+      let unexpanded = this.topLeft === null; 
+      if (unexpanded) {
+        if (this.objects.length <= 16) {
+          // Just add
+          this.objects.push(object);
+        } else {
+          // Split node
+          let toDispatch = this.objects;
+          let halfWidth = this.width / 2;
+          let halfHeight = this.height / 2;
+          let pivotX = this.x + halfWidth;
+          let pivotY = this.y + halfHeight;
+          
+          this.topLeft = createQuadNode(this.x, this.y, halfWidth, halfHeight);
+          this.topRight = createQuadNode(pivotX, this.y, halfWidth, halfHeight);
+          this.bottomLeft = createQuadNode(this.x, pivotY, halfWidth, halfHeight);
+          this.bottomRight = createQuadNode(pivotX, pivotY, halfWidth, halfHeight);
+          
+          // Dispatch objects
+          this.objects = [];
+          for(let object of toDispatch) {
+            this.dispatchObject(object);
+          }
+        }
+      } else {
+        this.dispatchObject(object);
+      }
+    },
+      
+    dispatchObject: function(object) {
+      let toTheLeft = left(object) <= this.pivotX && right(object) <= this.pivotX;
+      let toTheRight = this.pivotX < left(object) && this.this.pivotX < right(object);
+      let above = topY(object) <= this.pivotY && topY(object) <= this.pivotY;
+      let below = this.pivotY < bottom(object) && this.pivotY < bottom(object);
+      if (toTheLeft) {
+        if (above) {
+          this.topLeft.addObject(object);
+        } else if (below) {
+          this.bottomLeft.addObject(object);          
+        } else {
+          objects.push(object);
+        }
+      } else if (toTheRight) {
+        if (above) {
+          this.topRight.addObject(object);
+        } else if (below) {
+          this.bottomRight.addObject(object);
+        } else {
+          objects.push(object);
+        }
+      } else {
+        objects.push(object);
+      }
+    }
+  });
+}
+
 
 /**
  *  load all of the images
@@ -48,6 +142,7 @@ function loadImage(url) {
 let images = {
   minibunny : loadImage("./images/minibunny16x16.png"),
   spaceman : loadImage("./images/spaceman60x100.png"),
+  unicorn: loadImage("./images/unicorn.png"),
   
   level1 : loadImage("./images/level1.png"),
   level2 : loadImage("./images/level2.png"),
@@ -64,11 +159,34 @@ let images = {
  *  load the world
  */
 function generateWorld(imageElement) {
+  world = {
+    camera: null,
+    player: null,
+
+    addObject: function(object) {
+    },
+
+    // Not used
+    immobileObjects: [],
+    mobileBodies: [],
+    mobs: [],
+
+    // Passivley used
+    walls: [],
+
+    // Activley used
+    visibleObjects: [], // For rendering
+    mobileObjects: [], // For move/accelleration/collision
+  };
+
   console.log(" === generateWorld === ")
   
   // Dimensions
   let width = imageElement.naturalWidth; 
   let height = imageElement.naturalHeight;
+  let tileSize = 32;
+  
+  world.index = createQuadNode(0, 0, width * tileSize, height* tileSize); 
 
   // Get canvas
   let canvas = document.createElement('canvas');
@@ -107,7 +225,6 @@ function generateWorld(imageElement) {
     return typeof(visitedMap[key(x, y)]) !== 'undefined';
   }
   
-  let tileSize = 32;
   
   function getColorCode(x, y) {
     let r = imageData.data[y * width * 4 + x * 4];
@@ -190,7 +307,7 @@ function generateWorld(imageElement) {
         } else if (code === "player") {
           log("Found player!!");
           camera = newCamera(shapeX + shapeWidth/2, shapeY + shapeHeight/2);
-          player = newPlayer(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.spaceman); //level2: 178*32
+          player = newPlayer(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.unicorn); //level2: 178*32
           newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode);
         } else if (code.endsWith("all")) { // TODO: case insensitive.
           newWall(shapeX, shapeY, shapeWidth, shapeHeight, code);

@@ -18,18 +18,23 @@ function actionKeyDown(actionKey) {
 
 
 function newPlayer(x, y, image) {
-	//let result = newMobileObject(x, y, 126, 206);
-	let result = newMobileBody(x, y, 60, 100);
-  setImage(result, image);
-  result.name = "player";
-  result.zIndex = 1;
-	
-  result.inJump = 0;
-  result.inSpinAnimation = 0;
-  result.allowNewSpin = true;
+	//let player = newMobileObject(x, y, 126, 206);
+
+	// let player = newMobileBody(x, y, 60, 100);
+	let player = newMobileBody(x, y, 100, 100);
+  setImage(player, image);
+  player.name = "player";
+  player.zIndex = 1;
   
-  result.failedSpinAttempts = 0;
-  result.tryStartSpin = function() {
+  player.weight = 90; 
+  player.invertedWeight = 1/player.weight;
+	
+  player.inJump = 0;
+  player.inSpinAnimation = 0;
+  player.allowNewSpin = true;
+  
+  player.failedSpinAttempts = 0;
+  player.tryStartSpin = function() {
   	this.allowNewSpin = false;
   	if (this.failedSpinAttempts > 1) {
 			this.inSpinAnimation = 1;
@@ -39,7 +44,7 @@ function newPlayer(x, y, image) {
     }
   }
   
-  result.accellerate = function() {
+  player.accellerate = function() {
   	let inAir = !this.hasGroundContact && !this.hasLeftGrip && !this.hasRightGrip && !this.hasTopGrip;
     if (!inAir) {
     	this.inJump = 0;
@@ -109,7 +114,7 @@ function newPlayer(x, y, image) {
     verticalAccelleration.bind(this)();
   }
 
-	result.animate = function(timeDuration) {
+	player.animate = function(timeDuration) {
     if (this.inSpinAnimation > 400) {
     	this.inSpinAnimation = 0;
       this.imageRotation = 0;
@@ -119,7 +124,7 @@ function newPlayer(x, y, image) {
     }
   }
 
-  world.player = result;
+  world.player = player;
   
-  return result;
+  return player;
 }
