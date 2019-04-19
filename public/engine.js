@@ -142,6 +142,7 @@ function newColoredRectangle(x, y, width, height, originX, originY, color) {
     }
   }
   world.visibleObjects.push(result);
+  return result;
 }
  
 function newImmobileObject(x, y, width, height, originX, originY) {
@@ -341,7 +342,19 @@ function collideObjects() {
       }      
     }
     
-    for(let object of world.walls) tryCollide(subject, object);
+    let collisions = {};
+    world.index.addCollisions(subject, collisions);
+    for (let id in collisions) {
+      let collision = collisions[id];
+      log(collision);
+      if (collision.a.collide) {
+        collision.a.collide(collision.rectangle, collision.b);
+      } else {
+        collision.b.collide(collision.rectangle, collision.a);
+      }
+    }
+    // if (Object.keys(collisions).length > 0) debugger;
+    // for(let object of world.walls) tryCollide(subject, object);
     for(let object of world.mobileBodies) tryCollide(subject, object);
   }
 } 

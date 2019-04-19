@@ -9,7 +9,8 @@ var world;
  *  Quad tree
  */
 function createQuadNode(x, y, width, height) {
-  let node = newRectangle(x, y, width, height) 
+  let node = newColoredRectangle(x, y, width, height);
+  node.color = "rgba(0, 0, 0, 0)";
   Object.assign(node, {
     counter: 0,
     pivotX: centerX(node),
@@ -36,6 +37,7 @@ function createQuadNode(x, y, width, height) {
           if (typeof(collisions[id]) === 'undefined') {
             objectHasMoreMass = object.invertedMass <= storedObject.invertedMass;
             collisions[id] = {
+                rectangle: collision,
                 a: objectHasMoreMass ? object : storedObject, 
                 b: objectHasMoreMass ? storedObject : object
             };
@@ -43,15 +45,17 @@ function createQuadNode(x, y, width, height) {
         }
       }
       
-      let inTopLeft = left(object) <= this.pivotX && topY(object) <= this.pivotY;
-      let inTopRight = this.pivotX < right(object) && topY(object) <= this.pivotY;
-      let inBottomLeft = left(object) <= this.pivotX && this.pivotY < bottom(object);
-      let inBottomRight = this.pivotX < right(object) && this.pivotY < bottom(object);
-      
-      if (inTopLeft) this.topLeft.addCollisions(object, collisions);
-      if (inTopRight) this.topRight.addCollisions(object, collisions);
-      if (inBottomLeft) this.bottomLeft.addCollisions(object, collisions);
-      if (inBottomRight) this.bottomRight.addCollisions(object, collisions);
+      if (this.topLeft) {        
+        let inTopLeft = left(object) <= this.pivotX && topY(object) <= this.pivotY;
+        let inTopRight = this.pivotX < right(object) && topY(object) <= this.pivotY;
+        let inBottomLeft = left(object) <= this.pivotX && this.pivotY < bottom(object);
+        let inBottomRight = this.pivotX < right(object) && this.pivotY < bottom(object);
+        
+        if (inTopLeft) this.topLeft.addCollisions(object, collisions);
+        if (inTopRight) this.topRight.addCollisions(object, collisions);
+        if (inBottomLeft) this.bottomLeft.addCollisions(object, collisions);
+        if (inBottomRight) this.bottomRight.addCollisions(object, collisions);
+      }
     },
     
     add: function(object) {
@@ -216,10 +220,12 @@ function generateWorld(imageElement) {
     mobileObjects: [], // For move/accelleration/collision
     
     // Future: 
-    index: createQuadNode(0, 0, width * tileSize, actualMapHeight * tileSize),
+    index: null, // Wait for it... 
     mobileCollidables: [],
     animatedObjects: []
   };
+  
+  world.index = createQuadNode(0, 0, width * tileSize, actualMapHeight * tileSize);
 
   console.log(" === generateWorld === ");  
   
