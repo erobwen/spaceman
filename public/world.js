@@ -11,6 +11,8 @@ var world;
 function createQuadNode(x, y, width, height) {
   let node = newColoredRectangle(x, y, width, height);
   node.color = "rgba(0, 0, 0, 0)";
+  node.zIndex = 1;
+  node.stroke = true;
   Object.assign(node, {
     counter: 0,
     pivotX: centerX(node),

@@ -138,7 +138,7 @@ function newColoredRectangle(x, y, width, height, originX, originY, color) {
       context.rect(Math.round(left(this) - left(camera)), Math.round(topY(this) - topY(camera)), this.width, this.height);
       context.fillStyle = this.color;
       context.fill();
-      // context.stroke();
+      if (this.stroke) context.stroke();
     }
   }
   world.visibleObjects.push(result);
@@ -376,7 +376,7 @@ function renderWorld() {
   }
 
   scene.sort((a, b) => { return a.zIndex - b.zIndex; });
-  // log(scene);
+  log(scene);
   for(let object of scene) {
     context = canvas.getContext("2d");
     context.beginPath();
