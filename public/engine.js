@@ -254,6 +254,7 @@ function newWall(x, y, width, height, image) {
   }
   world.visibleObjects.push(wall);
   world.walls.push(wall);
+  world.index.add(wall);
   wall.body = true;
   return wall;
 }

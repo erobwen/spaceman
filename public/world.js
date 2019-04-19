@@ -11,6 +11,7 @@ var world;
 function createQuadNode(x, y, width, height) {
   let node = newRectangle(x, y, width, height) 
   Object.assign(node, {
+    counter: 0,
     pivotX: centerX(node),
     pivotY: centerY(node),
     
@@ -53,7 +54,8 @@ function createQuadNode(x, y, width, height) {
       if (inBottomRight) this.bottomRight.addCollisions(object, collisions);
     },
     
-    addObject: function(object) {
+    add: function(object) {
+      this.counter++;
       let unexpanded = this.topLeft === null; 
       if (unexpanded) {
         if (this.objects.length <= 16) {
@@ -85,30 +87,31 @@ function createQuadNode(x, y, width, height) {
       
     dispatchObject: function(object) {
       let toTheLeft = left(object) <= this.pivotX && right(object) <= this.pivotX;
-      let toTheRight = this.pivotX < left(object) && this.this.pivotX < right(object);
+      let toTheRight = this.pivotX < left(object) && this.pivotX < right(object);
       let above = topY(object) <= this.pivotY && topY(object) <= this.pivotY;
       let below = this.pivotY < bottom(object) && this.pivotY < bottom(object);
       if (toTheLeft) {
         if (above) {
-          this.topLeft.addObject(object);
+          this.topLeft.add(object);
         } else if (below) {
-          this.bottomLeft.addObject(object);          
+          this.bottomLeft.add(object);          
         } else {
-          objects.push(object);
+          this.objects.push(object);
         }
       } else if (toTheRight) {
         if (above) {
-          this.topRight.addObject(object);
+          this.topRight.add(object);
         } else if (below) {
-          this.bottomRight.addObject(object);
+          this.bottomRight.add(object);
         } else {
-          objects.push(object);
+          this.objects.push(object);
         }
       } else {
-        objects.push(object);
+        this.objects.push(object);
       }
     }
   });
+  return node; 
 }
 
 
@@ -154,68 +157,72 @@ let images = {
   oldSteelWall : loadImage("./images/steel_wall_1_32x32.png")
 };
 
+var colorCodes = {
+  "rgba(255, 242, 0, 255)" : "minibunny",
+  
+  "rgba(255, 82, 105, 255)" : "player",
+  
+  "rgba(255, 255, 255, 255)" : "space",
+  
+  "rgba(0, 0, 0, 255)" : "oldSteelWall",
+  "rgba(127, 127, 127, 255)" : "steelWall",
+  "rgba(107, 107, 107, 255)" : "darkSteelWall",
+  "rgba(239, 228, 175, 255)" : "labWall",
+  
+  "rgba(255, 174, 201, 255)" : "legendSeparator",
+  
+  // "rgba(0, 0, 0, 0)" : "wall"
+}
  
 /**
  *  load the world
  */
-function generateWorld(imageElement) {
-  world = {
-    camera: null,
-    player: null,
-
-    addObject: function(object) {
-    },
-
-    // Not used
-    immobileObjects: [],
-    mobileBodies: [],
-    mobs: [],
-
-    // Passivley used
-    walls: [],
-
-    // Activley used
-    visibleObjects: [], // For rendering
-    mobileObjects: [], // For move/accelleration/collision
-  };
-
-  console.log(" === generateWorld === ")
-  
+function generateWorld(imageElement) {  
   // Dimensions
   let width = imageElement.naturalWidth; 
   let height = imageElement.naturalHeight;
   let tileSize = 32;
-  
-  world.index = createQuadNode(0, 0, width * tileSize, height* tileSize); 
 
-  // Get canvas
+  // Get a canvas with image data
   let canvas = document.createElement('canvas');
-  // log(canvas);
   canvas.width = width;
   canvas.height = height;
-  
-  // Get image data
   let context = canvas.getContext('2d');
   context.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
   let imageData = context.getImageData(0, 0, width, height);
-  
-  
-  let colorCodes = {
-    "rgba(255, 242, 0, 255)" : "minibunny",
-    
-    "rgba(255, 82, 105, 255)" : "player",
-    
-    "rgba(255, 255, 255, 255)" : "space",
-    
-    "rgba(0, 0, 0, 255)" : "oldSteelWall",
-    "rgba(127, 127, 127, 255)" : "steelWall",
-    "rgba(107, 107, 107, 255)" : "darkSteelWall",
-    "rgba(239, 228, 175, 255)" : "labWall",
-    
-    "rgba(255, 174, 201, 255)" : "legendSeparator",
-    
-    // "rgba(0, 0, 0, 0)" : "wall"
+
+  // Get actual map height
+  let actualMapHeight;
+  let yScan = 0
+  while(yScan < height) {
+    if ("legendSeparator" === getColorCode(0, yScan)) {
+      actualMapHeight = yScan;
+      break;
+    };
+    yScan++;
   }
+  actualMapHeight = yScan;
+  
+  world = {
+    camera: null,
+    player: null,
+
+    // Deprecated: 
+    immobileObjects: [],
+    mobileBodies: [],
+    mobs: [],
+    walls: [],
+    visibleObjects: [], // For rendering
+    mobileObjects: [], // For move/accelleration/collision
+    
+    // Future: 
+    index: createQuadNode(0, 0, width * tileSize, actualMapHeight * tileSize),
+    mobileCollidables: [],
+    animatedObjects: []
+  };
+
+  console.log(" === generateWorld === ");  
+  
   let defaultColorCode = null;
   
   let hasReachedLegend = false;
