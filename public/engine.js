@@ -346,7 +346,6 @@ function collideObjects() {
     world.index.addCollisions(subject, collisions);
     for (let id in collisions) {
       let collision = collisions[id];
-      log(collision);
       if (collision.a.collide) {
         collision.a.collide(collision.rectangle, collision.b);
       } else {

@@ -94,8 +94,8 @@ function createQuadNode(x, y, width, height) {
     dispatchObject: function(object) {
       let toTheLeft = left(object) <= this.pivotX && right(object) <= this.pivotX;
       let toTheRight = this.pivotX < left(object) && this.pivotX < right(object);
-      let above = topY(object) <= this.pivotY && topY(object) <= this.pivotY;
-      let below = this.pivotY < bottom(object) && this.pivotY < bottom(object);
+      let above = topY(object) <= this.pivotY && bottom(object) <= this.pivotY;
+      let below = this.pivotY < bottom(object) && this.pivotY < topY(object);
       if (toTheLeft) {
         if (above) {
           this.topLeft.add(object);
