@@ -142,6 +142,7 @@ function newColoredRectangle(x, y, width, height, originX, originY, color) {
     }
   }
   world.visibleObjects.push(result);
+  // world.index.add(result);
   return result;
 }
  
@@ -220,6 +221,7 @@ function newMobileBody(x, y, width, height, originX, originY) {
 function newCamera(x, y) {
 	let result = newMobileObject(x, y, canvas.width, canvas.height);
   result.name = "camera";
+  result.invertedWeight = -1;
   result.accellerate = function() {
   	camera.xSpeed = (player.x - camera.x) / 2;
 		camera.ySpeed = (player.y - camera.y) / 2;
@@ -333,15 +335,7 @@ function collideObjects() {
   for(let subject of world.mobileBodies) {
     subject.resetCollisionState();
     
-    function tryCollide(subject, object) {
-      if (object !== subject) {
-        let collision = calculateCollision(subject, object);
-        if (collision !== null) {
-          subject.collide(collision, object);
-        }
-      }      
-    }
-    
+    // Collide with walls
     let collisions = {};
     world.index.addCollisions(subject, collisions);
     for (let id in collisions) {
@@ -352,8 +346,16 @@ function collideObjects() {
         collision.b.collide(collision.rectangle, collision.a);
       }
     }
-    // if (Object.keys(collisions).length > 0) debugger;
-    // for(let object of world.walls) tryCollide(subject, object);
+
+    // Collide with mobile (TODO: use index as well...)
+    function tryCollide(subject, object) {
+      if (object !== subject) {
+        let collision = calculateCollision(subject, object);
+        if (collision !== null) {
+          subject.collide(collision, object);
+        }
+      }      
+    }
     for(let object of world.mobileBodies) tryCollide(subject, object);
   }
 } 
@@ -373,9 +375,18 @@ function renderWorld() {
       scene.push(object);
     }
   }
+  
+  // let scene = [];
+  // let collisions = {};
+  // world.index.addCollisions(world.camera, collisions);
+  // for (let id in collisions) {
+    // let collision = collisions[id];
+    // scene.push(collision.a);
+  // }
+  
 
   scene.sort((a, b) => { return a.zIndex - b.zIndex; });
-  log(scene);
+  // log(scene);
   for(let object of scene) {
     context = canvas.getContext("2d");
     context.beginPath();
