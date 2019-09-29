@@ -20,8 +20,8 @@ function actionKeyDown(actionKey) {
 function newPlayer(x, y, image) {
 	//let player = newMobileObject(x, y, 126, 206);
 
-	// let player = newMobileBody(x, y, 60, 100);
-	let player = newMobileBody(x, y, 100, 100);
+	let player = newMobileBody(x, y, 60, 100);
+	// let player = newMobileBody(x, y, 100, 100);
   setImage(player, image);
   player.name = "player";
   player.zIndex = 1;

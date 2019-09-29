@@ -322,7 +322,7 @@ function generateWorld(imageElement) {
         } else if (code === "player") {
           log("Found player!!");
           camera = newCamera(shapeX + shapeWidth/2, shapeY + shapeHeight/2);
-          player = newPlayer(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.unicorn); //level2: 178*32
+          player = newPlayer(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.spaceman); //level2: 178*32
           newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode);
         } else if (code.endsWith("all")) { // TODO: case insensitive.
           newWall(shapeX, shapeY, shapeWidth, shapeHeight, code);
