@@ -85,6 +85,7 @@ function generateWorldFromImage(imageElement, tileSize, defaultColorCode, addIte
       if (code === "legendSeparator") {
         hasReachedLegend = true; 
       } else if (code !== "space") {
+        let dimensions = getColorDimensions(imageData, width, x, y);
         let topLeftX = x;
         let topLeftY = y;
         let bottomRightX = x;
@@ -96,7 +97,7 @@ function generateWorldFromImage(imageElement, tileSize, defaultColorCode, addIte
           
           // Try expand right
           let scanX = bottomRightX + 1;
-          if (scanX < width) {
+          if (scanX < width && (bottomRightX - topLeftX + 1) < dimensions.width) {
             let allTheSame = true;
             for (let scanY = topLeftY; scanY <= bottomRightY; scanY++) {
               if (code !== getColorCode(imageData, width, scanX, scanY) || visited(scanX, scanY)) allTheSame = false;
@@ -113,7 +114,7 @@ function generateWorldFromImage(imageElement, tileSize, defaultColorCode, addIte
 
           // Try expand right
           scanY = bottomRightY + 1;
-          if (scanY < height) {           
+          if (scanY < height && (bottomRightY - topLeftY + 1) < dimensions.height) {           
             allTheSame = true;
             for (let scanX = topLeftX; scanX <= bottomRightX; scanX++) {
               if (code !== getColorCode(imageData, width, scanX, scanY) || visited(scanX, scanY)) allTheSame = false;
@@ -151,3 +152,47 @@ function generateWorldFromImage(imageElement, tileSize, defaultColorCode, addIte
     }
   }
 }
+
+
+function getMapCode({r, b, g, a}) {
+  let colorString = "rgba("+r+", "+g+", "+b+", "+a+")";
+  if (typeof(colorCodes[colorString]) === 'undefined') {      
+    // log("Warning: unrecognized color code rgba("+r+", "+g+", "+b+", "+a+")");
+    return colorString;
+  } else {
+    return colorCodes[colorString];
+  }
+}
+
+function getColorDimensions(imageData, width, x, y) {
+  const codeAndDimensions = getMapCode(getRgba(imageData, width, x, y)).split("|");
+  if (codeAndDimensions.length === 2) {
+    const dimensions = codeAndDimensions[1].split("x");
+    return {
+      width: parseInt(dimensions[0]),
+      height: parseInt(dimensions[1])
+    }
+  } else {
+    return {
+      width: 1000,
+      height: 1000
+    }
+  }
+}
+
+function getColorCode(imageData, width, x, y) {
+  return getMapCode(getRgba(imageData, width, x, y)).split("|")[0];
+}
+
+function getRgba(imageData, width, x, y) {
+  let r = imageData.data[y * width * 4 + x * 4];
+  let g = imageData.data[y * width * 4 + x * 4 + 1];
+  let b = imageData.data[y * width * 4 + x * 4 + 2];
+  let a = imageData.data[y * width * 4 + x * 4 + 3];
+  return {
+    r: r,
+    g: g,
+    b: b,
+    a: a
+  }
+} 

@@ -5,9 +5,9 @@
 var world;
 
 var colorCodes = {
-  "rgba(255, 242, 0, 255)" : "minibunny",
+  "rgba(255, 242, 0, 255)" : "minibunny|1x1",
   
-  "rgba(255, 82, 105, 255)" : "player",
+  "rgba(255, 82, 105, 255)" : "player|2x6",
   
   "rgba(255, 255, 255, 255)" : "space",
   
@@ -21,32 +21,6 @@ var colorCodes = {
   // "rgba(0, 0, 0, 0)" : "wall"
 }
 
-function getMapCode({r, b, g, a}) {
-  let colorString = "rgba("+r+", "+g+", "+b+", "+a+")";
-  if (typeof(colorCodes[colorString]) === 'undefined') {      
-    // log("Warning: unrecognized color code rgba("+r+", "+g+", "+b+", "+a+")");
-    return colorString;
-  } else {
-    return colorCodes[colorString];
-  }
-}
-
-function getColorCode(imageData, width, x, y) {
-  return getMapCode(getRgba(imageData, width, x, y));
-}
-
-function getRgba(imageData, width, x, y) {
-  let r = imageData.data[y * width * 4 + x * 4];
-  let g = imageData.data[y * width * 4 + x * 4 + 1];
-  let b = imageData.data[y * width * 4 + x * 4 + 2];
-  let a = imageData.data[y * width * 4 + x * 4 + 3];
-  return {
-    r: r,
-    g: g,
-    b: b,
-    a: a
-  }
-} 
 
 function getImageData(imageElement) {
   // Get a canvas with image data
@@ -62,7 +36,6 @@ function getImageData(imageElement) {
 }
 
 
- 
 /**
  *  load the world
  */
