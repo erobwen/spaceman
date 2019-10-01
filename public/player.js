@@ -1,15 +1,40 @@
+let keyMap = {
+  "moveLeft" : ["ArrowLeft", "KeyA"],
+  "moveRight" : ["ArrowRight", "KeyD"],
+  "jump" : "Space",
+  "moveUp" : ["ArrowUp", "KeyW"],
+  "moveDown" : ["ArrowDown", "KeyS"]
+}
+
+
+function actionKeyDown(actionKey) {
+  let keys = keyMap[actionKey];
+  if (keys instanceof Array) {
+    return anyKeyDown(keys);
+  } else {
+    return keyDown(keys);
+  }
+}
+
+
 function newPlayer(x, y, image) {
-	//let result = newMobileObject(x, y, 126, 206);
-	let result = newMobileObject(x, y, 60, 100);
-  setImage(result, image);
-  result.name = "player";
-	
-  result.inJump = 0;
-  result.inSpinAnimation = 0;
-  result.allowNewSpin = true;
+	//let player = newMobileObject(x, y, 126, 206);
+
+	// let player = newMobileBody(x, y, 60, 100);
+	let player = newMobileBody(x, y, 100, 100);
+  setImage(player, image);
+  player.name = "player";
+  player.zIndex = 1;
   
-  result.failedSpinAttempts = 0;
-  result.tryStartSpin = function() {
+  player.weight = 90; 
+  player.invertedWeight = 1/player.weight;
+	
+  player.inJump = 0;
+  player.inSpinAnimation = 0;
+  player.allowNewSpin = true;
+  
+  player.failedSpinAttempts = 0;
+  player.tryStartSpin = function() {
   	this.allowNewSpin = false;
   	if (this.failedSpinAttempts > 1) {
 			this.inSpinAnimation = 1;
@@ -19,7 +44,7 @@ function newPlayer(x, y, image) {
     }
   }
   
-  result.accellerate = function() {
+  player.accellerate = function() {
   	let inAir = !this.hasGroundContact && !this.hasLeftGrip && !this.hasRightGrip && !this.hasTopGrip;
     if (!inAir) {
     	this.inJump = 0;
@@ -40,7 +65,7 @@ function newPlayer(x, y, image) {
       let friction = airFactor * 0.6/framesPerSecond;  
       let breakAction = airFactor * 20/framesPerSecond;
 
-      let xAcelleration = accelleration * (keyDown("ArrowRight") - keyDown("ArrowLeft"));
+      let xAcelleration = accelleration * (actionKeyDown("moveRight") - actionKeyDown("moveLeft"));
       let xFriction = oppositeSign(this.xSpeed) * (this.xSpeed * this.xSpeed * friction);
       this.xSpeed = this.xSpeed + xAcelleration + xFriction;
       if (this.hasGroundContact) {
@@ -59,23 +84,23 @@ function newPlayer(x, y, image) {
       let climbFriction = 5/framesPerSecond;
       
       if (this.hasGroundContact) {
-        if (keyDown("Space")) {
+        if (actionKeyDown("jump")) {
         	this.inJump = true;
           this.ySpeed -= jumpAccelleration;
         } 
       } else if (this.hasRightGrip || this.hasLeftGrip) {
       	let jumpDirection = this.hasLeftGrip ? 1 : -1;
-        if (keyDown("Space")) {
+        if (actionKeyDown("jump")) { 
           this.ySpeed -= jumpAccelleration * 0.9;
           this.xSpeed += jumpAccelleration * 0.9 * jumpDirection;  
         } else {
         	this.xSpeed -= jumpDirection*1; // stick to surface
 					if (this.ySpeed > 0) {
-          	if (keyDown("ArrowDown")) slippageFriction *= 0.1; 
+          	if (actionKeyDown("moveDown")) slippageFriction *= 0.1; 
           	this.ySpeed -= Math.min(this.ySpeed, (this.ySpeed * this.ySpeed * slippageFriction));
           }
-          log('keyDown("ArrowUp") = ' + keyDown("ArrowUp"));
-          if(keyDown("ArrowUp")) {
+          log('actionKeyDown("moveUp") = ' + actionKeyDown("moveUp"));
+          if(actionKeyDown("moveUp")) {
             log(-climbAccelleration);
             log(this.ySpeed * this.ySpeed * climbFriction);
             log(-climbAccelleration + (this.ySpeed * this.ySpeed * climbFriction));
@@ -89,7 +114,7 @@ function newPlayer(x, y, image) {
     verticalAccelleration.bind(this)();
   }
 
-	result.animate = function(timeDuration) {
+	player.animate = function(timeDuration) {
     if (this.inSpinAnimation > 400) {
     	this.inSpinAnimation = 0;
       this.imageRotation = 0;
@@ -99,41 +124,7 @@ function newPlayer(x, y, image) {
     }
   }
 
-	result.resetCollisionState = function() {
-    this.hasGroundContact = false;
-    this.hasLeftGrip = false;
-    this.hasRightGrip = false;
-    this.hasTopGrip = false;
-  }
+  world.player = player;
   
-  result.collide = function(collision, object) {
-    if(collision.width > collision.height) {
-      if(centerY(collision) < centerY(this)) {
-        // Push this down
-        this.y += collision.height;
-        this.ySpeed = 0;
-        this.hasTopGrip = true;
-      } else {
-        // Push this up
-        this.y -= collision.height;
-        this.ySpeed = 0;
-        this.hasGroundContact = true;
-      }
-    } else {
-      if(centerX(collision) < centerX(this)) {
-        // Push this right
-        this.x += collision.width;
-        this.xSpeed = 0;
-        this.hasLeftGrip = true;
-      } else {
-        // Push this left
-        this.x -= collision.width;
-        this.xSpeed = 0;
-        this.hasRightGrip = true;
-      }      	
-    }
-  }
-  
-    
-  return result;
+  return player;
 }

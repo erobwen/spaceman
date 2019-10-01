@@ -28,8 +28,7 @@ function sign(number) {
 /**
  *  Setup canvas
  */
- 
- log(document);
+log(document);
 let canvas = document.getElementById("canvas");
 log(canvas);
 canvas.width = canvas.getClientRects()[0].width;
@@ -55,6 +54,13 @@ document.addEventListener("keyup", function(event) {
 
 function keyDown(code) {
 	return typeof(keyStates[code]) === 'undefined' ? 0 : keyStates[code]; 
+}
+
+function anyKeyDown(codes) {
+  for (let code of codes) {
+    if (keyDown(code)) return true;
+  }
+  return false;
 }
 
 
@@ -98,11 +104,13 @@ function calculateCollision(A, B) {
     return null;
 }
 
-function newRectangle(x, y, width, height, originX, originY, color) {
+
+let nextId = 0;
+function newRectangle(x, y, width, height, originX, originY) {
 	if (typeof(originX) === 'undefined') originX = 0;
 	if (typeof(originY) === 'undefined') originY = 0;
-	if (typeof(color) === 'undefined') color = "pink";
   return {
+    id : nextId++,
   	name: "rectangle",
     x: x,
     y: y,
@@ -110,17 +118,7 @@ function newRectangle(x, y, width, height, originX, originY, color) {
     originY: originY,
     width: width,
     height: height,
-    color: color,
-    render: function(context, camera) {
-      if (calculateCollision(this, camera) !== null) {
-        // log("render rectangle" + this.color);        
-        context.rect(Math.round(left(this) - left(camera)), Math.round(topY(this) - topY(camera)), this.width, this.height);
-        context.fillStyle = this.color;
-        context.fill();
-        // context.stroke();
-      }
-    },
-    solid: false
+    zIndex : 0
   }
 }
 
@@ -128,31 +126,95 @@ function newRectangle(x, y, width, height, originX, originY, color) {
 /**
  *  Builders
  */
+function newColoredRectangle(x, y, width, height, originX, originY, color) {
+	if (typeof(originX) === 'undefined') originX = 0;
+	if (typeof(originY) === 'undefined') originY = 0;
+	if (typeof(color) === 'undefined') color = "pink";
+  let result = newRectangle(x, y, width, height, originX, originY);
+  result.color = color;
+  result.render = function(context, camera) {
+    if (calculateCollision(this, camera) !== null) {
+      // log("render rectangle" + this.color);        
+      context.rect(Math.round(left(this) - left(camera)), Math.round(topY(this) - topY(camera)), this.width, this.height);
+      context.fillStyle = this.color;
+      context.fill();
+      // context.stroke();
+    }
+  }
+  world.visibleObjects.push(result);
+}
+ 
 function newImmobileObject(x, y, width, height, originX, originY) {
 	if (typeof(originX) === 'undefined') originX = 0;
 	if (typeof(originY) === 'undefined') originY = 0;
 	let result = newRectangle(x, y, width, height, originX, originY);
+  
   result.mobile = false;
+  world.immobileObjects.push(result);
   return result;
 }
 
 
-let mobileObjects = [];
 function newMobileObject(x, y, width, height, originX, originY) {
 	if (typeof(originX) === 'undefined') originX = width / 2; // Mobile objects have center origin.
 	if (typeof(originY) === 'undefined') originY = height / 2;
 	let result = newRectangle(x, y, width, height, originX, originY);
-  result.mobile = true;
   result.xSpeed = 0;
   result.ySpeed = 0;
   result.accellerate = function() {};
   result.animate = function(timeDuration) {};
-  result.resetCollisionState = function() {};
   result.collide = function() {};
-  mobileObjects.push(result);
+  
+  result.mobile = true;
+  world.mobileObjects.push(result);
   return result;
 }
 
+function newMobileBody(x, y, width, height, originX, originY) {
+	if (typeof(originX) === 'undefined') originX = width / 2; // Mobile objects have center origin.
+	if (typeof(originY) === 'undefined') originY = height / 2;
+  let result = newMobileObject(x, y, width, height, originX, originY);
+  
+  result.resetCollisionState = function() {
+    this.hasGroundContact = false;
+    this.hasLeftGrip = false;
+    this.hasRightGrip = false;
+    this.hasTopGrip = false;
+  }
+  result.resetCollisionState();
+  
+  result.collide = function(collision, object) {
+    if(collision.width > collision.height) {
+      if(centerY(collision) < centerY(this)) {
+        // Push this down
+        this.y += collision.height;
+        this.ySpeed = 0;
+        this.hasTopGrip = true;
+      } else {
+        // Push this up
+        this.y -= collision.height;
+        this.ySpeed = 0;
+        this.hasGroundContact = true;
+      }
+    } else {
+      if(centerX(collision) < centerX(this)) {
+        // Push this right
+        this.x += collision.width;
+        this.xSpeed = 0;
+        this.hasLeftGrip = true;
+      } else {
+        // Push this left
+        this.x -= collision.width;
+        this.xSpeed = 0;
+        this.hasRightGrip = true;
+      }      	
+    }
+  }
+
+  result.body = true;
+  world.mobileBodies.push(result);
+  return result;
+}
 
 function newCamera(x, y) {
 	let result = newMobileObject(x, y, canvas.width, canvas.height);
@@ -161,13 +223,15 @@ function newCamera(x, y) {
   	camera.xSpeed = (player.x - camera.x) / 2;
 		camera.ySpeed = (player.y - camera.y) / 2;
   }
-  result.solid = false;
-	result.render = function() {}; // Never render itself!
+	result.render = false; // Never render itself!
+  
+  world.camera = result;
   return result;
 }
 
 function newWall(x, y, width, height, image) {
 	let wall = newImmobileObject(x, y, width, height);
+  wall.invertedWeight = 0;
   wall.name = "wall";
   wall.image = image; 
   wall.render = function(context, camera) {
@@ -188,7 +252,10 @@ function newWall(x, y, width, height, image) {
       context.stroke();
     }
   }
-  setSolid(wall);
+  world.visibleObjects.push(wall);
+  world.walls.push(wall);
+  world.index.add(wall);
+  wall.body = true;
   return wall;
 }
 
@@ -196,10 +263,6 @@ function newWall(x, y, width, height, image) {
 /**
  *  Object modifiers
  */
-
-function setSolid(object) {
-	object.solid = true;
-}
 
 function setImage(object, image) {
 	object.image = image;
@@ -240,6 +303,8 @@ function setImage(object, image) {
       }
     }
   }
+
+  world.visibleObjects.push(object);
 }
 
 
@@ -249,38 +314,35 @@ function setImage(object, image) {
  */
 
 function accellerateObjects() {
-  for(let object of world) {
-    if (object.mobile) {
-    	object.accellerate();
-    }
+  for(let object of world.mobileObjects) {
+    object.accellerate();
   }
 }
 
 function moveObjects() {
-	for(let object of world) {
-  	if (object.mobile) {
-    	//log("moving" + object.name);
-      //log(object.xSpeed);
-      //log(object.ySpeed);
-    	object.animate(frameDuration);
-      object.x += object.xSpeed;
-      object.y += object.ySpeed;
-    }
+  for(let object of world.mobileObjects) {
+    object.animate(frameDuration);
+    object.x += object.xSpeed;
+    object.y += object.ySpeed;
   }
 }
 
 function collideObjects() {
   // let subject = player; // TODO: loop all that are mobile.
-  for(let subject of mobileObjects) {
+  for(let subject of world.mobileBodies) {
     subject.resetCollisionState();
-    for(let object of world) {
-      if (object.solid && object !== subject) {
+    
+    function tryCollide(subject, object) {
+      if (object !== subject) {
         let collision = calculateCollision(subject, object);
         if (collision !== null) {
           subject.collide(collision, object);
         }
-      }
-    }    
+      }      
+    }
+    
+    for(let object of world.walls) tryCollide(subject, object);
+    for(let object of world.mobileBodies) tryCollide(subject, object);
   }
 } 
 
@@ -292,7 +354,17 @@ function renderWorld() {
   context.moveTo(0,0);
   // log("=========================================");
   // log("rendering...");
-	for(let object of world) {
+
+  let scene = [];
+	for(let object of world.visibleObjects) {
+    if (calculateCollision(object, world.camera) !== null) {
+      scene.push(object);
+    }
+  }
+
+  scene.sort((a, b) => { return a.zIndex - b.zIndex; });
+  // log(scene);
+  for(let object of scene) {
     context = canvas.getContext("2d");
     context.beginPath();
     context.moveTo(0,0);
@@ -322,7 +394,10 @@ function gameloop() {
     let newTimestamp = getTimestamp();
     let diff = newTimestamp - loopTimestamp;
     loopTimestamp = newTimestamp;
-    log(diff);
+    // log(diff);
+    if (diff > frameDuration) {
+      log("LAG Warning! FPS:" + 1000 / diff);
+    }
   }
   if (keyDown("Escape")) return;
   
