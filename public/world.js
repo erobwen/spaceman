@@ -56,10 +56,14 @@ function generateWorld(imageElement) {
 
     index: createQuadNode(0, 0, width * tileSize, height * tileSize), 
     movingObjects: null,
-    addCollisions: function(object, collisions)  {
-      index.addCollisions(object, collisions);
-      this.movingObjects.forEach(movingObject => {
-        calculateMassCollision(collisions, object, movingObject);
+    addCollisions: function(object, collisions, filter)  {
+      // log("world");
+      // log(this);
+      world.index.addCollisions(object, collisions, filter);
+      world.movingObjects.forEach(movingObject => {
+        if (!filter || filter(movingObject)) {
+          calculateMassCollision(collisions, object, movingObject);
+        }
       });
     }.bind(world),
 

@@ -219,7 +219,7 @@ function newMobileRigidBody(x, y, width, height, originX, originY) {
     }
   }
 
-  result.rigid = true;
+  result.isRigid = true;
   return result;
 }
 
@@ -275,8 +275,11 @@ function newWall(x, y, width, height, image) {
       context.stroke();
     }
   }
+  wall.collide = function() {
+    throw new Error("not here....");
+  };  
   wall.isVisible = true;
-  wall.rigid = true;
+  wall.isRigid = true;
   return wall;
 }
 
@@ -374,12 +377,13 @@ function getTimestamp() {
 }
 
 var loopTimestamp = null;
-let limit = 100;
+// let limit = 10;
 function gameloop() {
-  if (limit-- === 0) return; 
+  log("==== Game Loop ====");
+
+  // if (limit-- === 0) return; 
   world.accelleratedBodies = [];
   world.movedModies = [];
-
 
   if (loopTimestamp !== null) {
     let newTimestamp = getTimestamp();
@@ -400,11 +404,11 @@ function gameloop() {
   } else {
   	alreadyInGameLoop = true;
 
-    // log("player.y" + world.player.y);
-    // log("player.ySpeed" + world.player.ySpeed);
     // Perform all actions
     accellerateObjects();
     moveAndCollideObjects();
+
+    // Restore index and render
     world.movingObjects.forEach(object => world.index.add(object));
     renderWorld();
 
@@ -426,51 +430,41 @@ function accellerateObjects() {
       world.movingObjects.push(object);
     }
   }
-  log(world.movingObjects);
 }
 
 function moveAndCollideObjects() {
-  world.movingObjects.forEach(object => {
-    log(object);
-    object.move();
-  });
+  // let limit = 10;
+  // while (world.movingObjects.length > 0 && limit-- > 0) {
+    moveObjects();
+    collideObjects();
+  // }
 }
 
-// function accellerateObjects() {
-//   let collisions = {};
-//   world.index.addCollisions(world.actionFrame, collisions);
-//   log(collisions);
-//   world.movingObjects.forEach(object => {
-//     object.move();
-//   })
-// }
-
-
-/**
- *  Game loop helpers
- */
 function moveObjects() {
-  for(let object of world.accelleratedBodies) {
-    object.animateMove(frameDuration);
-    object.x += object.xSpeed;
-    object.y += object.ySpeed;
-  }
+  world.movingObjects.forEach(object => {
+    object.move();
+});
 }
 
 function collideObjects() {
   // let subject = player; // TODO: loop all that are mobile.
   for(let subject of world.movingObjects) {
-    subject.resetCollisionState();
-    
-    // Collide with walls
-    let collisions = {};
-    world.index.addCollisions(subject, collisions);
-    for (let id in collisions) {
-      let collision = collisions[id];
-      if (collision.a.collide) {
-        collision.a.collide(collision.rectangle, collision.b);
-      } else {
-        collision.b.collide(collision.rectangle, collision.a);
+    if (subject.isRigid) {    
+      if (subject.resetCollisionState) subject.resetCollisionState();
+      
+      // Collide with walls
+      let collisions = {};
+      world.addCollisions(subject, collisions, (object) => { return object.isRigid; });
+      // log(collisions);
+
+      for (let id in collisions) {
+        let collision = collisions[id];
+        log(collision);
+        if (collision.light.collide) {
+          collision.light.collide(collision.rectangle, collision.heavy);
+        } else {
+          collision.heavy.collide(collision.rectangle, collision.light);
+        }
       }
     }
   }

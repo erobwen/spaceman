@@ -41,9 +41,11 @@ function createQuadNode(x, y, width, height) {
     bottomLeft: null, 
     bottomRight: null,
     
-    addCollisions: function(object, collisions) {
+    addCollisions: function(object, collisions, filter) {
       for (let storedObject of this.objects) {
-        calculateMassCollision(collisions, object, storedObject)
+        if (!filter || filter(storedObject)) {
+          calculateMassCollision(collisions, object, storedObject)
+        }
       }
       
       if (this.topLeft) {        
@@ -52,10 +54,10 @@ function createQuadNode(x, y, width, height) {
         let inBottomLeft = left(object) <= this.pivotX && this.pivotY < bottom(object);
         let inBottomRight = this.pivotX < right(object) && this.pivotY < bottom(object);
         
-        if (inTopLeft) this.topLeft.addCollisions(object, collisions);
-        if (inTopRight) this.topRight.addCollisions(object, collisions);
-        if (inBottomLeft) this.bottomLeft.addCollisions(object, collisions);
-        if (inBottomRight) this.bottomRight.addCollisions(object, collisions);
+        if (inTopLeft) this.topLeft.addCollisions(object, collisions, filter);
+        if (inTopRight) this.topRight.addCollisions(object, collisions, filter);
+        if (inBottomLeft) this.bottomLeft.addCollisions(object, collisions, filter);
+        if (inBottomRight) this.bottomRight.addCollisions(object, collisions, filter);
       }
     },
 
