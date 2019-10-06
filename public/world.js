@@ -55,16 +55,21 @@ function generateWorld(imageElement) {
     camera: null,
 
     index: createQuadNode(0, 0, width * tileSize, height * tileSize), 
-    
-    loopTime: 0,
-    accelleratedBodies: null,
-    movedBodies: null,
+    movingObjects: null,
+    addCollisions: function(object, collisions)  {
+      index.addCollisions(object, collisions);
+      this.movingObjects.forEach(movingObject => {
+        calculateMassCollision(collisions, object, movingObject);
+      });
+    }.bind(world),
+
+    loopTime: 0
   };
 
   generateWorldFromImage(imageElement, tileSize, null, ({code, defaultColorCode, shapeX, shapeY, shapeWidth, shapeHeight}) => {
     if (code === "minibunny") {
       log("Found bunny!!");
-      newMiniBunny(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.minibunny); //level2: 178*32
+      world.index.add(newMiniBunny(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.minibunny)); //level2: 178*32
       world.index.add(newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode));  // Cover up hole!         
     } else if (code === "player") {
       log("Found player!!");
@@ -88,6 +93,8 @@ function generateWorld(imageElement) {
   // Add camera and action frame  
   world.camera = newCamera(world.player);
   world.actionFrame = newActionFrame(world.camera);
+  world.index.add(world.camera);
+  world.index.add(world.actionFrame);
 }
 
 /**
@@ -101,6 +108,6 @@ afterLoadingAllImages = function() {
   log(world)
   renderWorld();
 
-  // log("==== Game Loop ====");
-  // gameloop();  
+  log("==== Game Loop ====");
+  gameloop();  
 }

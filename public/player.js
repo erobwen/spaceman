@@ -112,7 +112,6 @@ function newPlayer(x, y, image) {
       this.ySpeed += gravity;
     }
     verticalAccelleration.bind(this)();
-    return (Math.abs(this.xSpeed) > 0 || Math.abs(this.ySpeed) > 0);
   }
 
 	player.animateMove = function(timeDuration) {

@@ -92,8 +92,12 @@ function centerY(object) {
 	return (topY(object) + bottom(object))/2;
 }
 
+function hasSpeed(object) {
+  return (Math.abs(object.xSpeed) > 0 || Math.abs(object.ySpeed) > 0);
+}
 
 function calculateCollision(A, B) {
+  if (A === B) return null;
   let collisionLeft = Math.max(left(A), left(B));
   let collisionRight = Math.min(right(A), right(B));
   let collisionTop = Math.max(topY(A), topY(B));
@@ -165,6 +169,11 @@ function newMobileObject(x, y, width, height, originX, originY) {
   result.animateMove = function(timeDuration) {};
   result.collide = function() {};
   
+  result.move = function() {
+    this.x += this.xSpeed;
+    this.y += this.ySpeed;
+  }.bind(result);
+
   result.mobile = true;
   return result;
 }
@@ -174,12 +183,6 @@ function newMobileRigidBody(x, y, width, height, originX, originY) {
 	if (typeof(originY) === 'undefined') originY = height / 2;
   let result = newMobileObject(x, y, width, height, originX, originY);
   
-  result.move = function() {
-    this.x = this.xSpeed;
-    this.y = this.ySpeed;
-    return (Math.abs(this.xSpeed) > 0 || Math.abs(this.ySpeed) > 0);
-  }.bind(result);
-
   result.resetCollisionState = function() {
     this.hasGroundContact = false;
     this.hasLeftGrip = false;
@@ -241,8 +244,8 @@ function newActionFrame(camera) {
   result.name = "actionFrame";
   result.invertedWeight = -1;
   result.accellerate = function() {
-    this.xSpeed = camera.x - this.x + camera.xSpeed;
-    this.ySpeed = camera.y - this.y + camera.ySpeed;
+    this.xSpeed = camera.x - this.x + camera.xSpeed; // This assumes that the camera accellerates first. 
+    this.ySpeed = camera.y - this.y + camera.ySpeed; // This assumes that the camera accellerates first. 
   }.bind(result)
   result.render = false; // Never render itself!
   return result;
@@ -326,35 +329,6 @@ function setImage(object, image) {
 
 
 
-/**
- *  Game loop helpers
- */
-function moveObjects() {
-  for(let object of world.accelleratedBodies) {
-    object.animateMove(frameDuration);
-    object.x += object.xSpeed;
-    object.y += object.ySpeed;
-  }
-}
-
-function collideObjects() {
-  // let subject = player; // TODO: loop all that are mobile.
-  for(let subject of world.movingBodies) {
-    subject.resetCollisionState();
-    
-    // Collide with walls
-    let collisions = {};
-    world.index.addCollisions(subject, collisions);
-    for (let id in collisions) {
-      let collision = collisions[id];
-      if (collision.a.collide) {
-        collision.a.collide(collision.rectangle, collision.b);
-      } else {
-        collision.b.collide(collision.rectangle, collision.a);
-      }
-    }
-  }
-} 
 
 function renderWorld() {
 	//Setup canvas
@@ -372,7 +346,6 @@ function renderWorld() {
     let collision = collisions[id];
     scene.push(collision.storedObject);
   }
-  
 
   scene.sort((a, b) => { return a.zIndex - b.zIndex; });
   // log(scene);
@@ -381,7 +354,7 @@ function renderWorld() {
     context.beginPath();
     context.moveTo(0,0);
     // context.save();
- 		object.render(context, world.camera);
+ 		if (object.render) object.render(context, world.camera);
     // context.restore();
  	}
 }
@@ -401,7 +374,9 @@ function getTimestamp() {
 }
 
 var loopTimestamp = null;
+let limit = 100;
 function gameloop() {
+  if (limit-- === 0) return; 
   world.accelleratedBodies = [];
   world.movedModies = [];
 
@@ -418,7 +393,6 @@ function gameloop() {
   if (keyDown("Escape")) return;
   
   setTimeout(gameloop, frameDuration);
-  log(world.actionFrame);
     
 	if (alreadyInGameLoop) {
   	log("skipping frame!!! LAG warning!");
@@ -426,23 +400,84 @@ function gameloop() {
   } else {
   	alreadyInGameLoop = true;
 
-    let collisions = {};
-    world.index.addCollisions(world.actionFrame, collisions);
-    log(collisions);
-    // for (let id in collisions) {
-      // let collision = collisions[id];
-      // let object = collision.b; 
-
-      // collision.b.accellerate();
-      // scene.push(collision.a);
-    // }
-    
+    // log("player.y" + world.player.y);
+    // log("player.ySpeed" + world.player.ySpeed);
     // Perform all actions
-    // accellerateObjects();
-    // moveObjects();
-    // collideObjects();
-    // renderWorld();
+    accellerateObjects();
+    moveAndCollideObjects();
+    world.movingObjects.forEach(object => world.index.add(object));
+    renderWorld();
 
 		alreadyInGameLoop = false;
   }
 }
+
+
+function accellerateObjects() {
+  world.movingObjects = [];
+  let collisions = {};
+  world.index.addCollisions(world.actionFrame, collisions);
+  // log(collisions);
+  for (let id in collisions) {
+    let object = collisions[id].storedObject;
+    if (object.accellerate) object.accellerate();
+    if (hasSpeed(object)) {
+      world.index.remove(object);
+      world.movingObjects.push(object);
+    }
+  }
+  log(world.movingObjects);
+}
+
+function moveAndCollideObjects() {
+  world.movingObjects.forEach(object => {
+    log(object);
+    object.move();
+  });
+}
+
+// function accellerateObjects() {
+//   let collisions = {};
+//   world.index.addCollisions(world.actionFrame, collisions);
+//   log(collisions);
+//   world.movingObjects.forEach(object => {
+//     object.move();
+//   })
+// }
+
+
+/**
+ *  Game loop helpers
+ */
+function moveObjects() {
+  for(let object of world.accelleratedBodies) {
+    object.animateMove(frameDuration);
+    object.x += object.xSpeed;
+    object.y += object.ySpeed;
+  }
+}
+
+function collideObjects() {
+  // let subject = player; // TODO: loop all that are mobile.
+  for(let subject of world.movingObjects) {
+    subject.resetCollisionState();
+    
+    // Collide with walls
+    let collisions = {};
+    world.index.addCollisions(subject, collisions);
+    for (let id in collisions) {
+      let collision = collisions[id];
+      if (collision.a.collide) {
+        collision.a.collide(collision.rectangle, collision.b);
+      } else {
+        collision.b.collide(collision.rectangle, collision.a);
+      }
+    }
+  }
+} 
+
+    // collision.b.accellerate();
+    // scene.push(collision.a);
+
+    // let object = collisions[id].storedObject;
+

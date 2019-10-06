@@ -1,4 +1,25 @@
+function collisionId(objectA, objectB) {
+  let idA = objectA.id;
+  let idB = objectB.id;
+  return idA < idB ? (idA + ":" + idB) : (idB + ":" + idA);        
+}      
 
+function calculateMassCollision(collisions, object, storedObject) {
+  let collision = calculateCollision(storedObject, object);
+  if (collision) {
+    let id = collisionId(storedObject, object);
+    if (typeof(collisions[id]) === 'undefined') {
+      objectHasMoreMass = object.invertedMass <= storedObject.invertedMass;
+      collisions[id] = {
+          rectangle: collision,
+          object: object, 
+          storedObject: storedObject,
+          heavy: objectHasMoreMass ? object : storedObject, //a = heavy
+          light: objectHasMoreMass ? storedObject : object // b = light
+      };
+    }
+  }
+}
 
 /**
  *  Quad tree
@@ -21,27 +42,8 @@ function createQuadNode(x, y, width, height) {
     bottomRight: null,
     
     addCollisions: function(object, collisions) {
-      function collisionId(objectA, objectB) {
-        let idA = objectA.id;
-        let idB = objectB.id;
-        return idA < idB ? (idA + ":" + idB) : (idB + ":" + idA);        
-      }
-      
       for (let storedObject of this.objects) {
-        let collision = calculateCollision(storedObject, object);
-        if (collision) {
-          let id = collisionId(storedObject, object);
-          if (typeof(collisions[id]) === 'undefined') {
-            objectHasMoreMass = object.invertedMass <= storedObject.invertedMass;
-            collisions[id] = {
-                rectangle: collision,
-                object: object, 
-                storedObject: storedObject,
-                heavy: objectHasMoreMass ? object : storedObject, //a = heavy
-                light: objectHasMoreMass ? storedObject : object // b = light
-            };
-          }
-        }
+        calculateMassCollision(collisions, object, storedObject)
       }
       
       if (this.topLeft) {        
@@ -56,6 +58,38 @@ function createQuadNode(x, y, width, height) {
         if (inBottomRight) this.bottomRight.addCollisions(object, collisions);
       }
     },
+
+    remove: function(object) {
+      this.counter++;
+      let unexpanded = this.topLeft === null; 
+      if (unexpanded) {
+        this.objects.splice(this.objects.indexOf(object), 1);
+      } else {
+        let toTheLeft = left(object) <= this.pivotX && right(object) <= this.pivotX;
+        let toTheRight = this.pivotX < left(object) && this.pivotX < right(object);
+        let above = topY(object) <= this.pivotY && bottom(object) <= this.pivotY;
+        let below = this.pivotY < bottom(object) && this.pivotY < topY(object);
+        if (toTheLeft) {
+          if (above) {
+            this.topLeft.remove(object);
+          } else if (below) {
+            this.bottomLeft.remove(object);          
+          } else {
+            this.objects.push(object);
+          }
+        } else if (toTheRight) {
+          if (above) {
+            this.topRight.remove(object);
+          } else if (below) {
+            this.bottomRight.remove(object);
+          } else {
+            this.objects.push(object);
+          }
+        } else {
+          this.objects.splice(this.objects.indexOf(object), 1);
+        }
+      }
+    },      
     
     add: function(object) {
       this.counter++;
@@ -63,6 +97,7 @@ function createQuadNode(x, y, width, height) {
       if (unexpanded) {
         if (this.objects.length <= 16) {
           // Just add
+          // log("adding one!" + this.);
           this.objects.push(object);
         } else {
           // Split node
