@@ -35,8 +35,10 @@ function createQuadNode(x, y, width, height) {
             objectHasMoreMass = object.invertedMass <= storedObject.invertedMass;
             collisions[id] = {
                 rectangle: collision,
-                a: objectHasMoreMass ? object : storedObject, 
-                b: objectHasMoreMass ? storedObject : object
+                object: object, 
+                storedObject: storedObject,
+                heavy: objectHasMoreMass ? object : storedObject, //a = heavy
+                light: objectHasMoreMass ? storedObject : object // b = light
             };
           }
         }

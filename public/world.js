@@ -40,6 +40,8 @@ function getImageData(imageElement) {
  *  load the world
  */
 function generateWorld(imageElement) {  
+  console.log(" === generateWorld === ");
+
   // Dimensions
   let tileSize = 32;
   const { width, height } = worldImageDimensions(imageElement);
@@ -48,45 +50,44 @@ function generateWorld(imageElement) {
   log(height);
   
   world = {
-    loopTime: 0,
-    accelleratedBodies: [],
-    movedBodies: [],
+    player: null,
     actionFrame: null,
     camera: null,
-    player: null,
-    index: null, 
-  };
 
-  world.index = createQuadNode(0, 0, width * tileSize, height * tileSize);
+    index: createQuadNode(0, 0, width * tileSize, height * tileSize), 
+    
+    loopTime: 0,
+    accelleratedBodies: null,
+    movedBodies: null,
+  };
 
   generateWorldFromImage(imageElement, tileSize, null, ({code, defaultColorCode, shapeX, shapeY, shapeWidth, shapeHeight}) => {
     if (code === "minibunny") {
       log("Found bunny!!");
       newMiniBunny(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.minibunny); //level2: 178*32
-      world.index.add(newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode));          
+      world.index.add(newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode));  // Cover up hole!         
     } else if (code === "player") {
       log("Found player!!");
-      world.camera = newCamera(shapeX + shapeWidth/2, shapeY + shapeHeight/2);
       world.player = newPlayer(shapeX + shapeWidth/2, shapeY + shapeHeight/2, images.spaceman); //level2: 178*32
-      world.index.add(camera);
-      world.index.add(player);
-      world.index.add(newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode));
+      world.index.add(world.player);
+      world.index.add(newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, defaultColorCode)); // Cover up hole!
     } else if (code.endsWith("all")) { // TODO: case insensitive.
       world.index.add(newWall(shapeX, shapeY, shapeWidth, shapeHeight, code));
       // resultData.push({x: shapeX, y: shapeY, w: shapeWidth, h: shapeHeight});          
     } else {
-      world.index.add(newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, code));
+      world.index.add(newColoredRectangle(shapeX, shapeY, shapeWidth, shapeHeight, 0, 0, code)); // Cover up hole!
     }
   });
   
-  console.log(" === generateWorld === ");  
   // Add player if not found earlier
   if(world.player === null) {
-    world.camera = newCamera(0, 0);
     world.player = newPlayer(0, 0, images.spaceman); //level2: 178*32    
-    world.index.add(camera);
-    world.index.add(player);
+    world.index.add(world.player);
   }
+  
+  // Add camera and action frame  
+  world.camera = newCamera(world.player);
+  world.actionFrame = newActionFrame(world.camera);
 }
 
 /**
@@ -100,6 +101,6 @@ afterLoadingAllImages = function() {
   log(world)
   renderWorld();
 
-  log("==== Game Loop ====");
-  gameloop();  
+  // log("==== Game Loop ====");
+  // gameloop();  
 }

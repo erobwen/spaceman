@@ -174,6 +174,12 @@ function newMobileRigidBody(x, y, width, height, originX, originY) {
 	if (typeof(originY) === 'undefined') originY = height / 2;
   let result = newMobileObject(x, y, width, height, originX, originY);
   
+  result.move = function() {
+    this.x = this.xSpeed;
+    this.y = this.ySpeed;
+    return (Math.abs(this.xSpeed) > 0 || Math.abs(this.ySpeed) > 0);
+  }.bind(result);
+
   result.resetCollisionState = function() {
     this.hasGroundContact = false;
     this.hasLeftGrip = false;
@@ -214,19 +220,34 @@ function newMobileRigidBody(x, y, width, height, originX, originY) {
   return result;
 }
 
-function newCamera(x, y) {
-	let result = newMobileObject(x, y, canvas.width, canvas.height);
+function newCamera(trackedPlayer) {
+  let result = newMobileObject(centerX(trackedPlayer), centerY(trackedPlayer), canvas.width, canvas.height);
+  result.trackedPlayer = trackedPlayer;
   result.name = "camera";
   result.invertedWeight = -1;
   result.accellerate = function() {
-  	camera.xSpeed = (player.x - camera.x) / 2;
-		camera.ySpeed = (player.y - camera.y) / 2;
-  }
+  	this.xSpeed = (trackedPlayer.x - this.x) / 2;
+		this.ySpeed = (trackedPlayer.y - this.y) / 2;
+  }.bind(result)
 	result.render = false; // Never render itself!
-  
-  world.camera = result;
   return result;
 }
+
+function newActionFrame(camera) {
+  const width = canvas.width * 3;
+  const height = canvas.height * 3; 
+  let result = newMobileObject(centerX(camera), centerY(camera), width, height);
+  result.camera = camera;
+  result.name = "actionFrame";
+  result.invertedWeight = -1;
+  result.accellerate = function() {
+    this.xSpeed = camera.x - this.x + camera.xSpeed;
+    this.ySpeed = camera.y - this.y + camera.ySpeed;
+  }.bind(result)
+  result.render = false; // Never render itself!
+  return result;
+}
+
 
 function newWall(x, y, width, height, image) {
 	let wall = newImmobileObject(x, y, width, height);
@@ -349,7 +370,7 @@ function renderWorld() {
   world.index.addCollisions(world.camera, collisions);
   for (let id in collisions) {
     let collision = collisions[id];
-    scene.push(collision.a);
+    scene.push(collision.storedObject);
   }
   
 
@@ -360,7 +381,7 @@ function renderWorld() {
     context.beginPath();
     context.moveTo(0,0);
     // context.save();
- 		object.render(context, camera);
+ 		object.render(context, world.camera);
     // context.restore();
  	}
 }
@@ -381,6 +402,10 @@ function getTimestamp() {
 
 var loopTimestamp = null;
 function gameloop() {
+  world.accelleratedBodies = [];
+  world.movedModies = [];
+
+
   if (loopTimestamp !== null) {
     let newTimestamp = getTimestamp();
     let diff = newTimestamp - loopTimestamp;
@@ -393,6 +418,7 @@ function gameloop() {
   if (keyDown("Escape")) return;
   
   setTimeout(gameloop, frameDuration);
+  log(world.actionFrame);
     
 	if (alreadyInGameLoop) {
   	log("skipping frame!!! LAG warning!");
@@ -400,11 +426,22 @@ function gameloop() {
   } else {
   	alreadyInGameLoop = true;
 
+    let collisions = {};
+    world.index.addCollisions(world.actionFrame, collisions);
+    log(collisions);
+    // for (let id in collisions) {
+      // let collision = collisions[id];
+      // let object = collision.b; 
+
+      // collision.b.accellerate();
+      // scene.push(collision.a);
+    // }
+    
     // Perform all actions
-    accellerateObjects();
-    moveObjects();
-    collideObjects();
-    renderWorld();
+    // accellerateObjects();
+    // moveObjects();
+    // collideObjects();
+    // renderWorld();
 
 		alreadyInGameLoop = false;
   }
