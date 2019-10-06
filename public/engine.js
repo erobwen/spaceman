@@ -244,8 +244,8 @@ function newActionFrame(camera) {
   result.name = "actionFrame";
   result.invertedWeight = -1;
   result.accellerate = function() {
-    this.xSpeed = camera.x - this.x + camera.xSpeed; // This assumes that the camera accellerates first. 
-    this.ySpeed = camera.y - this.y + camera.ySpeed; // This assumes that the camera accellerates first. 
+    this.xSpeed = camera.x - this.x;// + camera.xSpeed; // This assumes that the camera accellerates first. 
+    this.ySpeed = camera.y - this.y;// + camera.ySpeed; // This assumes that the camera accellerates first. 
   }.bind(result)
   result.render = false; // Never render itself!
   return result;
@@ -430,6 +430,9 @@ function accellerateObjects() {
       world.movingObjects.push(object);
     }
   }
+  world.actionFrame.accellerate();
+  world.movingObjects.push(world.actionFrame);
+  log(world.movingObjects);
 }
 
 function moveAndCollideObjects() {
@@ -443,6 +446,7 @@ function moveAndCollideObjects() {
 function moveObjects() {
   world.movingObjects.forEach(object => {
     object.move();
+    if (object.animateMove) object.animateMove(frameDuration);
 });
 }
 

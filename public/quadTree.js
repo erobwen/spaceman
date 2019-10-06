@@ -42,6 +42,9 @@ function createQuadNode(x, y, width, height) {
     bottomRight: null,
     
     addCollisions: function(object, collisions, filter) {
+      if (!filter || filter(this)) {
+        calculateMassCollision(collisions, object, this);
+      }
       for (let storedObject of this.objects) {
         if (!filter || filter(storedObject)) {
           calculateMassCollision(collisions, object, storedObject)
