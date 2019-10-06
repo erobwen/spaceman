@@ -141,8 +141,7 @@ function newColoredRectangle(x, y, width, height, originX, originY, color) {
       if (this.stroke) context.stroke();
     }
   }
-  world.visibleObjects.push(result);
-  // world.index.add(result);
+  result.isVisible = true;
   return result;
 }
  
@@ -150,9 +149,8 @@ function newImmobileObject(x, y, width, height, originX, originY) {
 	if (typeof(originX) === 'undefined') originX = 0;
 	if (typeof(originY) === 'undefined') originY = 0;
 	let result = newRectangle(x, y, width, height, originX, originY);
-  
+  result.invertedWeight = 0;  
   result.mobile = false;
-  world.immobileObjects.push(result);
   return result;
 }
 
@@ -164,15 +162,14 @@ function newMobileObject(x, y, width, height, originX, originY) {
   result.xSpeed = 0;
   result.ySpeed = 0;
   result.accellerate = function() {};
-  result.animate = function(timeDuration) {};
+  result.animateMove = function(timeDuration) {};
   result.collide = function() {};
   
   result.mobile = true;
-  world.mobileObjects.push(result);
   return result;
 }
 
-function newMobileBody(x, y, width, height, originX, originY) {
+function newMobileRigidBody(x, y, width, height, originX, originY) {
 	if (typeof(originX) === 'undefined') originX = width / 2; // Mobile objects have center origin.
 	if (typeof(originY) === 'undefined') originY = height / 2;
   let result = newMobileObject(x, y, width, height, originX, originY);
@@ -213,8 +210,7 @@ function newMobileBody(x, y, width, height, originX, originY) {
     }
   }
 
-  result.body = true;
-  world.mobileBodies.push(result);
+  result.rigid = true;
   return result;
 }
 
@@ -255,10 +251,8 @@ function newWall(x, y, width, height, image) {
       context.stroke();
     }
   }
-  world.visibleObjects.push(wall);
-  world.walls.push(wall);
-  world.index.add(wall);
-  wall.body = true;
+  wall.isVisible = true;
+  wall.rigid = true;
   return wall;
 }
 
@@ -306,8 +300,7 @@ function setImage(object, image) {
       }
     }
   }
-
-  world.visibleObjects.push(object);
+  object.isVisible = true; 
 }
 
 
@@ -315,16 +308,9 @@ function setImage(object, image) {
 /**
  *  Game loop helpers
  */
-
-function accellerateObjects() {
-  for(let object of world.mobileObjects) {
-    object.accellerate();
-  }
-}
-
 function moveObjects() {
-  for(let object of world.mobileObjects) {
-    object.animate(frameDuration);
+  for(let object of world.accelleratedBodies) {
+    object.animateMove(frameDuration);
     object.x += object.xSpeed;
     object.y += object.ySpeed;
   }
@@ -332,7 +318,7 @@ function moveObjects() {
 
 function collideObjects() {
   // let subject = player; // TODO: loop all that are mobile.
-  for(let subject of world.mobileBodies) {
+  for(let subject of world.movingBodies) {
     subject.resetCollisionState();
     
     // Collide with walls
@@ -346,17 +332,6 @@ function collideObjects() {
         collision.b.collide(collision.rectangle, collision.a);
       }
     }
-
-    // Collide with mobile (TODO: use index as well...)
-    function tryCollide(subject, object) {
-      if (object !== subject) {
-        let collision = calculateCollision(subject, object);
-        if (collision !== null) {
-          subject.collide(collision, object);
-        }
-      }      
-    }
-    for(let object of world.mobileBodies) tryCollide(subject, object);
   }
 } 
 
@@ -370,19 +345,12 @@ function renderWorld() {
   // log("rendering...");
 
   let scene = [];
-	for(let object of world.visibleObjects) {
-    if (calculateCollision(object, world.camera) !== null) {
-      scene.push(object);
-    }
+  let collisions = {};
+  world.index.addCollisions(world.camera, collisions);
+  for (let id in collisions) {
+    let collision = collisions[id];
+    scene.push(collision.a);
   }
-  
-  // let scene = [];
-  // let collisions = {};
-  // world.index.addCollisions(world.camera, collisions);
-  // for (let id in collisions) {
-    // let collision = collisions[id];
-    // scene.push(collision.a);
-  // }
   
 
   scene.sort((a, b) => { return a.zIndex - b.zIndex; });

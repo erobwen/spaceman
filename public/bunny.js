@@ -1,6 +1,6 @@
 function newMiniBunny(x, y, image) {
 	//let result = newMobileObject(x, y, 126, 206);
-	let result = newMobileBody(x, y, 16, 16);
+	let result = newMobileRigidBody(x, y, 16, 16);
   setImage(result, image);
   result.name = "minibunny";
   result.zIndex = 1;
@@ -29,7 +29,7 @@ function newMiniBunny(x, y, image) {
     }      
   }
 
-	result.animate = function(timeDuration) {
+	result.animateMove = function(timeDuration) {
     // if (this.inSpinAnimation > 400) {
     	// this.inSpinAnimation = 0;
       // this.imageRotation = 0;
@@ -38,8 +38,6 @@ function newMiniBunny(x, y, image) {
       // this.imageRotation = sign(this.xSpeed) * Math.PI * 2 * this.inSpinAnimation / 400
     // }
   }
-  
-  world.mobs.push(result);
-    
+      
   return result;
 }
