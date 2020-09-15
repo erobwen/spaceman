@@ -377,44 +377,47 @@ function renderWorld() {
 
 /**
  *  Game loop core
- */
- 
-var quit = false;
-var framesPerSecond = 60;
+ */ 
+var framesPerSecond = 100.0; // Estimate, will be ajusted dynamically
+var lastFramesPerSecond = 100.0;
+
+var framesPerSecondMax = 100.0;
+var frameDurationMin = 1000.0 / framesPerSecondMax;
+
 var alreadyInGameLoop = false;
-var frameDuration = 1000 / framesPerSecond;
+var frameDuration = 1000.0 / framesPerSecond;
+
 function getTimestamp() {
   let d = new Date();
   return d.getTime();
 }
 
-var loopTimestamp = null;
-function gameloop() {
-  if (loopTimestamp !== null) {
-    let newTimestamp = getTimestamp();
-    let diff = newTimestamp - loopTimestamp;
-    loopTimestamp = newTimestamp;
-    // log(diff);
-    if (diff > frameDuration) {
-      log("LAG Warning! FPS:" + 1000 / diff);
-    }
-  }
-  if (keyDown("Escape")) return;
-  
-  setTimeout(gameloop, frameDuration);
-    
-	if (alreadyInGameLoop) {
-  	log("skipping frame!!! LAG warning!");
-    return;
-  } else {
-  	alreadyInGameLoop = true;
+function releaseControl(time) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => { resolve()} , time);
+  })
+}
+
+async function gameloop() {
+  let loopStartTimestamp = null;
+  while(true) {
+    if (keyDown("Escape")) return;
+    loopStartTimestamp = getTimestamp();
 
     // Perform all actions
     accellerateObjects();
     moveObjects();
     collideObjects();
     renderWorld();
+    await releaseControl(0); // To make drawing happen?
+    
+    const loopEndTimeStamp = getTimestamp();
+    frameDuration = loopEndTimeStamp - loopStartTimestamp;
+    lastFramesPerSecond = framesPerSecond;
+    framesPerSecond = 1000.0 / frameDuration;
 
-		alreadyInGameLoop = false;
-  }
+    const waitTime = Math.max(0, frameDurationMin - frameDuration);
+    await releaseControl(waitTime);
+  }    
 }
+
