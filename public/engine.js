@@ -386,6 +386,8 @@ var frameDuration = 1000.0 / framesPerSecond; // Initial estimate, will be ajust
 var framesPerSecondMax = 100.0;
 var frameDurationMin = 1000.0 / framesPerSecondMax; 
 
+var averageFramesPerSecond = framesPerSecond;
+
 
 function getTimestamp() {
   let d = new Date();
@@ -414,7 +416,8 @@ async function gameloop() {
     const loopEndTimeStamp = getTimestamp();
     frameDuration = loopEndTimeStamp - loopStartTimestamp;
     lastFramesPerSecond = framesPerSecond;
-    framesPerSecond = 1000.0 / frameDuration;
+    framesPerSecond = Math.min(1000.0 / frameDuration, framesPerSecondMax);
+    averageFramesPerSecond = (averageFramesPerSecond + framesPerSecond) / 2;
 
     const waitTime = Math.max(0, frameDurationMin - frameDuration);
     await releaseControl(waitTime);
