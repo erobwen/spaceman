@@ -378,14 +378,14 @@ function renderWorld() {
 /**
  *  Game loop core
  */ 
-var framesPerSecond = 100.0; // Estimate, will be ajusted dynamically
+var framesPerSecond = 100.0; // Initial estimate, will be ajusted dynamically
 var lastFramesPerSecond = 100.0;
+var frameDuration = 1000.0 / framesPerSecond; // Initial estimate, will be ajusted dynamically.
 
+// Set limitations
 var framesPerSecondMax = 100.0;
-var frameDurationMin = 1000.0 / framesPerSecondMax;
+var frameDurationMin = 1000.0 / framesPerSecondMax; 
 
-var alreadyInGameLoop = false;
-var frameDuration = 1000.0 / framesPerSecond;
 
 function getTimestamp() {
   let d = new Date();
