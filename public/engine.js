@@ -394,7 +394,8 @@ function getTimestamp() {
   return d.getTime();
 }
 
-function releaseControl(time) {
+async function releaseControl(time) {
+  if (typeof(time) === "undefined") time = 0;
   return new Promise((resolve, reject) => {
     setTimeout(() => { resolve()} , time);
   })
@@ -411,7 +412,7 @@ async function gameloop() {
     moveObjects();
     collideObjects();
     renderWorld();
-    await releaseControl(0); // To make drawing happen?
+    await releaseControl(0); // To make drawing happen
     
     const loopEndTimeStamp = getTimestamp();
     frameDuration = loopEndTimeStamp - loopStartTimestamp;
